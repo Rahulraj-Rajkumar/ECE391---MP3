@@ -8,6 +8,7 @@
 #include "i8259.h"
 #include "debug.h"
 #include "tests.h"
+#include "keyboard.h"
 
 #define RUN_TESTS
 
@@ -156,5 +157,5 @@ void entry(unsigned long magic, unsigned long addr) {
     /* Execute the first program ("shell") ... */
 
     /* Spin (nicely, so we don't chew up cycles) */
-    asm volatile (".1: hlt; jmp .1;");
+     asm volatile (".1: hlt; jmp .1;");
 }

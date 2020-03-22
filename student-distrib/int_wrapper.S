@@ -1,0 +1,17 @@
+.global rtc_int_w, kbrd_int_w
+
+rtc_int_w:
+    pushal
+    pushfl
+    call rtc_int
+    popfl
+    popal
+    iret
+
+kbrd_int_w:
+    pushal
+    pushfl
+    call kbrd_int
+    popfl
+    popal
+    iret
