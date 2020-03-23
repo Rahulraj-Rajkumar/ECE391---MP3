@@ -1,0 +1,55 @@
+﻿Kernel crashed on keyboard input
+When: 3/21/2020
+Fix: Interrupt gates were set incorrect
+Who: Rahul Rajkumar
+
+
+No exception when dereferencing NULL ptr
+When: 3/21/2020
+Fix: Only set video memory page to be present
+Who: Matthew Nolan
+
+
+Error in compiling the kernel once RTC was implemented
+When: 3/19/2020
+Fix: Found missing semicolon within rtc.c code.
+Who: Rahul Rajkumar
+
+
+RTC not initializing
+When: 3/20/2020
+Fix: Forgot to include rtc.h in kernel.c. Fixed it right up.
+Who: Vinayak Dhanawade
+
+
+Compilation warning due to syntax in paging functions
+When: 3/20/2020
+Who: Matthew Nolan
+
+
+Implicit declaration of initialize_rtc function in kernel.c
+When: 3/20/2020
+Fix: misspelled initialize in rtc.h
+Who: Vinayak Dhanawade :D
+
+
+
+
+
+
+Keyboard outputs would not write to top row of console
+When 3/22/2020
+Fix: Edited putc function in lib.c to properly account for rows
+Who: Rahul Rajkumar
+
+
+Syscalls crash the kernel
+When: 3/22/2020
+Fix: Implemented basic handler with asm wrapper for syscalls
+Who: Rahul Rajkumar
+
+
+Compilation warnings for unused variables in user test functions
+When: 3/20/2020
+Fix: set “unused” variables (used for dereferencing) to 0 after they are used
+Who: Rahul Rajkumar
