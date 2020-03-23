@@ -66,6 +66,7 @@ void nullptr_test(){
 	printf("vro this test finna page fault: ");
 	int* nullptr = NULL;
 	int rip = *nullptr;
+	rip = 0;
 }
 
 /* Page doesnt exist test
@@ -77,12 +78,22 @@ void nullptr_test(){
  * Coverage: Exception Handler, Paging
  * Files: idt.c, ex_handler.c, paging.c
  */
-void page_doesnt_exist_test(){
+void page_doesnt_exist_test_end(){
 	TEST_HEADER;
 	printf("vro this test finna page fault: ");
 	int* pageptr = (int*)(0x800069);
 	int rip = *(pageptr);
+	rip = 0;
 }
+
+void page_doesnt_exist_test_start(){
+	TEST_HEADER;
+	printf("vro this test finna page fault: ");
+	int* pageptr = (int*)(0xB7FF4);
+	int rip = *(pageptr);
+	rip = 0;
+}
+
 
 /* Page does exist test
  * 
@@ -102,6 +113,7 @@ void page_does_exist_test(){
 	printf("Video memory test hella passed vro, ");
 
 	pageptr = (int*)(0x400069);
+	rip = *pageptr;
 	printf("Kernel memory hella passed too vro \n");
 }
 
@@ -149,7 +161,8 @@ void launch_tests(){
 	// TEST_OUTPUT("idt_test", idt_test());
 	// launch your tests here
 	// nullptr_test();
-	// page_doesnt_exist_test();
+	// page_doesnt_exist_test_start();
+	// page_doesnt_exist_test_end();
 	// page_does_exist_test();
 	// rtc_test();
 	// syscall_test();
