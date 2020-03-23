@@ -6,6 +6,7 @@
 #define INF_LOOP  0x01
 
 void divide_error_ex();
+void sys_int();
 void debug_ex();
 void nmi_int_ex();
 void breakpoint_ex();

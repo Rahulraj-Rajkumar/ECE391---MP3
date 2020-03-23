@@ -11,7 +11,7 @@ void setup_idt()
     int i;
     for (i = 0; i < NUM_VEC; i++)
     {
-        if(i < 20 || i == 0x21 || i == 0x28)
+        if(i < 20 || i == INT_KBRD || i == INT_RTC || i == INT_SYSCALL)
         {
             idt[i].seg_selector = KERNEL_CS;
 	        idt[i].reserved4 	= 0x00;
@@ -70,4 +70,5 @@ void initialize_idt()
     SET_IDT_ENTRY(idt[0x13], simd_ex_w);
     SET_IDT_ENTRY(idt[INT_KBRD], kbrd_int_w);
     SET_IDT_ENTRY(idt[INT_RTC], rtc_int_w);
+    SET_IDT_ENTRY(idt[INT_SYSCALL], sys_int_w);
 }

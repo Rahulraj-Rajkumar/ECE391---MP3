@@ -59,7 +59,7 @@ int idt_test(){
  * Outputs: None
  * Side Effects: Should result in page fault
  * Coverage: Exception Handler
- * Files: idt.c
+ * Files: idt.c, ex_handler.c
  */
 void nullptr_test(){
 	TEST_HEADER;
@@ -75,7 +75,7 @@ void nullptr_test(){
  * Outputs: None
  * Side Effects: Should result in page fault
  * Coverage: Exception Handler, Paging
- * Files: idt.c, paging.c
+ * Files: idt.c, ex_handler.c, paging.c
  */
 void page_doesnt_exist_test(){
 	TEST_HEADER;
@@ -92,7 +92,7 @@ void page_doesnt_exist_test(){
  * Outputs: None
  * Side Effects: Should not result in page fault
  * Coverage: Exception Handler, Paging
- * Files: idt.c, paging.c
+ * Files: idt.c, ex_handler.c, paging.c
  */
 void page_does_exist_test(){
 	TEST_HEADER;
@@ -120,6 +120,24 @@ void rtc_test(){
 }
 
 
+/* Null ptr test
+ * 
+ * Tests is syscalls are accounted for
+ * Inputs: None
+ * Outputs: None
+ * Side Effects: Should print out syscall handler
+ * Coverage: Exception Handler
+ * Files: idt.c, ex_handler.c
+ */
+void syscall_test() {
+	TEST_HEADER;
+	asm volatile ("\
+		movl $69, %eax\n\
+		int $0x80\n\
+	");
+}
+
+
 /* Checkpoint 2 tests */
 /* Checkpoint 3 tests */
 /* Checkpoint 4 tests */
@@ -134,4 +152,5 @@ void launch_tests(){
 	// page_doesnt_exist_test();
 	// page_does_exist_test();
 	// rtc_test();
+	 syscall_test();
 }

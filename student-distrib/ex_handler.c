@@ -9,6 +9,11 @@ void divide_error_ex(){
     while(INF_LOOP);
 }   
 
+void sys_int(){
+    cli();
+    printf("this is syscall");
+}
+
 void debug_ex(){
     cli();
     printf("debug exception");
