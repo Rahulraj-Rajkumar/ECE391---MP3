@@ -69,6 +69,25 @@ void nullptr_test(){
 	rip = 0;
 }
 
+/* div_test
+ *
+ * Test divide by zero exception
+ * Inputs: None
+ * Outputs: None
+ * Side Effects: should cause divide by zero exception.
+ * Coverage: Exception handler.
+ * Files: idt.c, ex_handler.c
+ */
+void div_test(){
+	TEST_HEADER;
+	printf("vro this test finna div error: ");
+	int a = 1;
+	int b = 0;
+	a = a/b;
+}
+
+
+
 /* Page doesnt exist test
  * 
  * Attempts to dereference page that isn't in range
@@ -160,6 +179,7 @@ void syscall_test() {
 void launch_tests(){
 	// TEST_OUTPUT("idt_test", idt_test());
 	// launch your tests here
+	div_test();
 	// nullptr_test();
 	// page_doesnt_exist_test_start();
 	// page_doesnt_exist_test_end();
