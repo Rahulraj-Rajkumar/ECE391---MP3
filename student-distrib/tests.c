@@ -120,7 +120,7 @@ void rtc_test(){
 }
 
 
-/* Null ptr test
+/* Sys call test
  * 
  * Tests is syscalls are accounted for
  * Inputs: None
@@ -152,5 +152,5 @@ void launch_tests(){
 	// page_doesnt_exist_test();
 	// page_does_exist_test();
 	// rtc_test();
-	 syscall_test();
+	// syscall_test();
 }
