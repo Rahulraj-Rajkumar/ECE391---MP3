@@ -147,6 +147,10 @@ void page_does_exist_test(){
  * Files: rtc.c
  */
 void rtc_test(){
+	while(1){
+		test_interrupts();
+		wait for some rtc interrupt
+	}
 	change_rate(4);
 }
 
@@ -184,6 +188,6 @@ void launch_tests(){
 	// page_doesnt_exist_test_start();
 	// page_doesnt_exist_test_end();
 	// page_does_exist_test();
-	// rtc_test();
+	rtc_test();
 	// syscall_test();
 }
