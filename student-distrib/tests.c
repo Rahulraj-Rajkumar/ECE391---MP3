@@ -147,11 +147,22 @@ void page_does_exist_test(){
  * Files: rtc.c
  */
 void rtc_test(){
-	while(1){
+	
+	// change_rate(20);
+	
+	// send_eoi(RTC_IRQ);
+
+	// while(1){
 		test_interrupts();
-		wait for some rtc interrupt
-	}
-	change_rate(4);
+		//wait for some rtc interrupt
+	
+	/* in order to leave RTC in usable (able to send more interrupts) state 
+      after handling the current interrupt, must read register C */
+    outb(REGISTERC, RTCPORT);
+    inb(RTCDATA);
+
+	send_eoi(RTC_IRQ);
+
 }
 
 
@@ -188,6 +199,6 @@ void launch_tests(){
 	// page_doesnt_exist_test_start();
 	// page_doesnt_exist_test_end();
 	// page_does_exist_test();
-	rtc_test();
+	 // rtc_test();
 	// syscall_test();
 }
