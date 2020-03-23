@@ -27,7 +27,7 @@ void init_paging(){
 
     page_directory[1] = (KERNEL_LOC | PDE_PS) | DEFAULT_PTE;
 
-	// Fill the rest of the directory with empty 4MB pages 
+	// Fill the rest of the directory with not present 4MB pages 
     for(i = 2; i < TABLE_SIZE; i++){
         page_directory[i] = (i << PDE_4MP_PBA_OFFSET) | PDE_PS | PDE_RW;
     }
@@ -36,11 +36,11 @@ void init_paging(){
 		movl	%%cr4, %%eax		\n\
 		orl		$0x10, %%eax		\n\
 		movl	%%eax, %%cr4		\n\
-		movl	$page_directory, %%eax			\n\
-		movl	%%eax, %%cr3		\n\
 		movl	%%cr0, %%eax		\n\
 		orl		$0x80000000, %%eax	\n\
 		movl	%%eax, %%cr0		\n\
+		movl	$page_directory, %%eax			\n\
+		movl	%%eax, %%cr3		\n\
 		"
 		:
 		:
