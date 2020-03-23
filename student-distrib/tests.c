@@ -179,7 +179,7 @@ void syscall_test() {
 void launch_tests(){
 	// TEST_OUTPUT("idt_test", idt_test());
 	// launch your tests here
-	div_test();
+	// div_test();
 	// nullptr_test();
 	// page_doesnt_exist_test_start();
 	// page_doesnt_exist_test_end();
