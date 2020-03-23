@@ -1,3 +1,8 @@
+#define ASM     1
+#include "int_wrapper.h"
+
+.text
+
 .global rtc_int_w, kbrd_int_w
 
 rtc_int_w:

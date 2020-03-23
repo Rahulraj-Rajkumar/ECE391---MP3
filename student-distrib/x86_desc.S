@@ -99,6 +99,7 @@ idt_desc_ptr:
     .word idt_bottom - idt - 1
     .long idt
 
+/* GDT descriptor pointer */
 gdt_desc_ptr:
     .word gdt_bottom - gdt - 1
     .long gdt

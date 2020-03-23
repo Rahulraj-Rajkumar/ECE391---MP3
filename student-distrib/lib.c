@@ -163,6 +163,8 @@ int32_t puts(int8_t* s) {
     return index;
 }
 
+
+
 /* void putc(uint8_t c);
  * Inputs: uint_8* c = character to print
  * Return Value: void
@@ -175,10 +177,23 @@ void putc(uint8_t c) {
         *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = c;
         *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = ATTRIB;
         screen_x++;
+        if(screen_x >= NUM_COLS)
+        {
+            screen_x = 0;
+            screen_y = ((screen_y + 1) % NUM_ROWS);
+            int32_t i;
+            for (i = screen_y * NUM_COLS; i < (screen_y + 1) * NUM_COLS; i++) {
+                *(uint8_t *)(video_mem + (i << 1)) = ' ';
+                *(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB;
+            }
+        }
+
         screen_x %= NUM_COLS;
         screen_y = (screen_y + (screen_x / NUM_COLS)) % NUM_ROWS;
     }
 }
+
+
 
 /* int8_t* itoa(uint32_t value, int8_t* buf, int32_t radix);
  * Inputs: uint32_t value = number to convert

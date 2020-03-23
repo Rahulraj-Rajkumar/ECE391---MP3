@@ -4,9 +4,12 @@
 #include "x86_desc.h"
 #include "ex_wrapper.h"
 #include "int_wrapper.h"
+#include "ex_handler.h"
 
+#ifndef ASM
 void idt_setup();
 void initialize_idt();
+#endif
 
 
 #define INT_KBRD 0x21

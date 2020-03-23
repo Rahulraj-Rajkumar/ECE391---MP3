@@ -27,9 +27,7 @@ continue:
     # Load the GDT
     lgdt    gdt_desc_ptr
 
-    # Load the IDT
-    lidt    idt_desc_ptr
-
+    # Set up idt gates
     pushl   %eax
     pushl   %ecx 
     pushl   %edx
@@ -38,6 +36,7 @@ continue:
     popl    %ecx
     popl    %eax
 
+    # Initialize IDT values
     pushl   %eax
     pushl   %ecx 
     pushl   %edx
@@ -45,6 +44,9 @@ continue:
     popl    %edx
     popl    %ecx
     popl    %eax
+
+    # Load the IDT
+    lidt    idt_desc_ptr
 
 
     # Load CS with the new descriptor value

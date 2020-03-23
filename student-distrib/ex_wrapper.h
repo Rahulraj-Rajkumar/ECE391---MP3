@@ -1,6 +1,8 @@
 #ifndef _EX_WRAPPER_H
 #define _EX_WRAPPER_H
 
+
+#ifndef ASM
 extern void divide_error_ex_w();
 extern void debug_ex_w();
 extern void nmi_int_ex_w();
@@ -20,6 +22,7 @@ extern void fpu_ex_w();
 extern void alignment_check_ex_w();
 extern void machine_check_ex_w();
 extern void simd_ex_w();
+#endif
 
 
 

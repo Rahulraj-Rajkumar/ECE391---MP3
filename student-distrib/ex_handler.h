@@ -3,6 +3,8 @@
 
 #include "lib.h"
 
+#define INF_LOOP  0x01
+
 void divide_error_ex();
 void debug_ex();
 void nmi_int_ex();

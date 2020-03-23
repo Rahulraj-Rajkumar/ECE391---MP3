@@ -11,19 +11,33 @@ void setup_idt()
     int i;
     for (i = 0; i < NUM_VEC; i++)
     {
-        idt[i].present = 0;     
-        idt[i].size = 1; 
-        if(i == INT_SYSCALL)
-        idt[i].dpl = 3;
+        if(i < 20 || i == 0x21 || i == 0x28)
+        {
+            idt[i].seg_selector = KERNEL_CS;
+	        idt[i].reserved4 	= 0x00;
+	        idt[i].reserved3 	= 0;
+	        idt[i].reserved2 	= 1;
+	        idt[i].reserved1 	= 1;
+	        idt[i].size 		= 1;	
+	        idt[i].reserved0	= 0;
+	        if(i == INT_SYSCALL)
+	        	idt[i].dpl 	= 3;
+	        else
+	        	idt[i].dpl 	= 0;
+	        idt[i].present 		= 1;
+        }
         else
-        idt[i].dpl = 0; 
-                                                
-        idt[i].reserved0 = 0; 
-        idt[i].reserved1 = 1;   
-        idt[i].reserved2 = 1;   
+        {
+        idt[i].present = 0;
+        idt[i].size = 1;
+        idt[i].dpl = 0;                 
+        idt[i].reserved0 = 0;
+        idt[i].reserved1 = 1;
+        idt[i].reserved2 = 1;
         idt[i].reserved3 = 1;
         idt[i].reserved4 = 0;     
         idt[i].seg_selector = KERNEL_CS; 
+        }
     }
 }
 
