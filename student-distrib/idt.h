@@ -15,5 +15,6 @@ void initialize_idt();
 #define INT_KBRD 0x21
 #define INT_RTC 0x28
 #define INT_SYSCALL 0x80
+#define CP1_IDTSIZE 20
 
 #endif
