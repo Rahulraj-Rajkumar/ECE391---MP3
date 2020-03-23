@@ -47,6 +47,7 @@ void initialize_rtc() {
 */
 void rtc_int()
 {
+    // VINNY YOU NEED TO USE THIS TEST_INTERRUPTS FUNCTION IN YOUR UNIT TEST FOR RTC SOMEHOW
     // test_interrupts();
     send_eoi(RTC_IRQ);
 
