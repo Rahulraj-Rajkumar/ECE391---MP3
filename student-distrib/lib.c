@@ -246,6 +246,7 @@ void putc(uint8_t c) {
             vert_scroll();
             screen_y = NUM_ROWS - 1;
         }
+    } else if(c == '\000') {
     } else {
         *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = c;
         *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = ATTRIB;

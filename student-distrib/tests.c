@@ -243,20 +243,17 @@ int read_file_test(const int8_t* fname) {
 	return PASS;
 }
 
-int read_data_test(const int8_t* fname){
+int print_file_test(const int8_t* fname){
+	TEST_HEADER;
+
 	dentry_t file;
-	uint8_t buf[10];
-	uint32_t i = 0;
-	uint32_t j;
+
 	if(-1 == read_dentry_by_name(fname, &file)) return FAIL;
-	while(read_data(file.inode_num, i, buf, 10) == 10){
-		i += 10;
-		printf("offset %d: ", i);
-		for(j = 0; j < 10; j++){
-			printf("%c", buf[j]);
-		}
-		printf("\n");
-	}
+
+	clear	();
+
+	print_file(&file);
+
 	return PASS;
 }
 
@@ -290,7 +287,8 @@ void launch_tests(){
 	// page_does_exist_test();
 	// rtc_test();
 	// syscall_test();
-	// terminal_keyboard_test();
 	// rtc_write_test();
-	TEST_OUTPUT("test_dir_open", test_dir_open());
+	// TEST_OUTPUT("test_dir_open", test_dir_open());
+	TEST_OUTPUT("print_file_test", print_file_test("frame1.txt"));
+	terminal_keyboard_test();
 }

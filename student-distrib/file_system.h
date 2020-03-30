@@ -38,6 +38,8 @@ int32_t read_dentry_by_name (const int8_t* fname, dentry_t* dentry);
 int32_t read_dentry_by_index (uint32_t index, dentry_t* dentry);
 int32_t read_data (uint32_t inode_index, uint32_t offset, uint8_t* buf, uint32_t length);
 
+void print_file(dentry_t* file);
+
 int32_t file_open (const uint8_t* filename, int32_t * fd);
 int32_t file_close (int32_t fd);
 int32_t file_write (int32_t fd, const void* buf, int32_t nbytes);

@@ -3,6 +3,8 @@
 
 boot_block_t* boot_block;
 
+#define NUM_BYTES 50
+
 int32_t init_file_system (uint32_t file_system_begin, uint32_t file_system_end){
     boot_block_t* possible_boot_block = (boot_block_t*) file_system_begin;
 
@@ -59,6 +61,37 @@ int32_t read_data (uint32_t inode_index, uint32_t offset, uint8_t* buf, uint32_t
         buf[i-offset] = data_block->data[i%BLOCK_SIZE];
     }
     return num_bytes;
+}
+
+void print_file(dentry_t* file){
+    printf("File Name: ");
+    printf(file->file_name);
+    printf("\n");
+    printf("File Type: ");
+    switch (file->file_type)
+    {
+    case 0 :
+        printf("RTC\n");
+        break;
+    case 1 :
+        printf("Directory\n");
+        break;
+    case 2 :
+        printf("File\n");
+        break;
+    default:
+        return;
+    }
+    printf("inode Num: %d\n", file->inode_num);
+    inode_t* inode = (inode_t*)boot_block+(file->inode_num+1);
+    printf("inode Length in B: %d\n", inode->length);
+    printf("File Contents:\n");
+    uint8_t buf[NUM_BYTES];
+    uint32_t i = 0;
+    int j, num_bytes;
+    while((num_bytes = file_read(file->inode_num, buf, NUM_BYTES, &i)))
+        for(j = 0; j < num_bytes; j++) putc(buf[j]);
+    printf("\n");
 }
 
 int32_t file_open (const uint8_t* filename, int32_t * fd){
