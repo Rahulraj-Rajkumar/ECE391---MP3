@@ -4,6 +4,7 @@
 #include "rtc.h"
 #include "paging.h"
 #include "keyboard.h"
+#include "file_system.h"
 
 #define PASS 1
 #define FAIL 0
@@ -232,7 +233,47 @@ void rtc_write_test() {
     inb(RTCDATA);
 }
 
+int read_file_test(const int8_t* fname) {
+	TEST_HEADER;
+    dentry_t file1;
+	dentry_t file2;
+    if(-1 == read_dentry_by_name(fname, &file1)) return FAIL;
+	if(-1 == read_dentry_by_index(file1.inode_num, &file2)) return FAIL;
+	if(file1.file_name != file2.file_name || file1.file_type != file2.file_type || file1.inode_num != file2.inode_num) return FAIL;
+	return PASS;
+}
 
+int read_data_test(const int8_t* fname){
+	dentry_t file;
+	uint8_t buf[10];
+	uint32_t i = 0;
+	uint32_t j;
+	if(-1 == read_dentry_by_name(fname, &file)) return FAIL;
+	while(read_data(file.inode_num, i, buf, 10) == 10){
+		i += 10;
+		printf("offset %d: ", i);
+		for(j = 0; j < 10; j++){
+			printf("%c", buf[j]);
+		}
+		printf("\n");
+	}
+	return PASS;
+}
+
+int test_dir_open(){
+	uint32_t  offset = 0;
+	int32_t fd;
+	uint8_t buf[32];
+	int i;
+	int num_bytes;
+	while((num_bytes = dir_read (fd , buf, 32, &offset))){
+		for(i = 0; i<num_bytes; i++){
+			putc(buf[i]);
+		}
+		printf("\n");
+	}
+	return PASS;
+}
 /* Checkpoint 3 tests */
 /* Checkpoint 4 tests */
 /* Checkpoint 5 tests */
@@ -251,4 +292,5 @@ void launch_tests(){
 	// syscall_test();
 	// terminal_keyboard_test();
 	// rtc_write_test();
+	TEST_OUTPUT("test_dir_open", test_dir_open());
 }
