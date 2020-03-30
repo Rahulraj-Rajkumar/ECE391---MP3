@@ -184,7 +184,22 @@ void syscall_test() {
 }
 
 
+
 /* Checkpoint 2 tests */
+
+void terminal_keyboard_test() {
+	uint8_t buf[5];
+	printf("Hella finna terminal read/write testing vro (5 char buffer)\n");
+		while(1)
+		{
+			terminal_read(buf, 5);
+			terminal_write(buf, 5);
+		}
+}
+
+
+
+
 /* Checkpoint 3 tests */
 /* Checkpoint 4 tests */
 /* Checkpoint 5 tests */
@@ -201,4 +216,5 @@ void launch_tests(){
 	// page_does_exist_test();
 	// rtc_test();
 	// syscall_test();
+	// terminal_keyboard_test();
 }

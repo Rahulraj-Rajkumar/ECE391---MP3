@@ -4,13 +4,13 @@
 #include "lib.h"
 #include "i8259.h"
 
-#define BLANK_SCANCODE  0x00
-#define SCANCODE_LENGTH 0x80
-#define ESCAPE_SCANCODE 0x1B
-#define KBRD_IRQ 0x01
-#define KBRD_PORT_DATA 0x60
-#define KBRD_PORT 0x64
-#define KBRD_BUF_LENGTH 128
+#define BLANK_SCANCODE              0x00
+#define SCANCODE_LENGTH             0x80
+#define ESCAPE_SCANCODE             0x1B
+#define KBRD_IRQ                    0x01
+#define KBRD_PORT_DATA              0x60
+#define KBRD_PORT                   0x64
+#define KBRD_BUF_LENGTH             128
 
 
 #define LCTRL_PRESS                 0x1D

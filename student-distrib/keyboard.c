@@ -11,6 +11,7 @@ static int is_ctrl = 0;
 
 // keyboard buffer
 static int8_t kbrd_buf[KBRD_BUF_LENGTH];
+static int8_t kbrd_read_buf[KBRD_BUF_LENGTH];
 // int to keep track of location in keyboard buf
 static uint8_t line_marker = 0;
 
@@ -23,40 +24,83 @@ int32_t terminal_close(){
   return 0;
 }
 
-
-
+/*
+* terminal_read
+*   DESCRIPTION: reads first nbytes chars from keyboard buf to input buf
+*   INPUTS:         uint8_t* buf: buffer to be written to
+*                   int32_t nbytes: number of chars to write
+*   OUTPUTS:        none
+*   RETURN VALUE:   none
+*   SIDE EFFECTS:   Writes to inputted buf, changes keyboard buf
+*
+*/
 int32_t terminal_read(uint8_t* buf, int32_t nbytes)
 {
+    int writeBytes;
     if(buf == NULL)
     {
       return -1;
-    } 
+    }
 
     read_lock = 1;
     is_enter = 0;
+
     while(!is_enter);
     cli();
 
-	  memcpy(buf, kbrd_buf, nbytes);
+    int i;
 
-    if(line_marker - nbytes < 0)
+	  if(line_marker - nbytes < 0)
     {
-	    memmove(kbrd_buf, kbrd_buf + nbytes, 0);
-	    memset(kbrd_buf, NULL_SCANCODE, nbytes);
+        writeBytes = 0;
+    } 
+    else
+    {
+        writeBytes = line_marker - nbytes;
+    }
+    
+    if(nbytes < KBRD_BUF_LENGTH)
+    {
+      for(i = 0; i < nbytes - 1; i++)
+      {
+          kbrd_read_buf[i] = kbrd_buf[i];
+      }
+      kbrd_read_buf[nbytes - 1] = '\n';
+      memcpy(buf, kbrd_read_buf, nbytes);
+      memmove(kbrd_buf, kbrd_buf + nbytes, writeBytes);
+      memset(kbrd_buf + writeBytes, NULL_SCANCODE, nbytes);
+      line_marker = writeBytes;
     }
     else
     {
-      memmove(kbrd_buf, kbrd_buf + nbytes, line_marker - nbytes);
-	    memset(kbrd_buf + line_marker - nbytes, NULL_SCANCODE, nbytes);
+      for(i = 0; i < KBRD_BUF_LENGTH - 1; i++)
+      {
+          kbrd_read_buf[i] = kbrd_buf[i];
+      }
+      kbrd_read_buf[KBRD_BUF_LENGTH - 1] = '\n';
+      memcpy(buf, kbrd_read_buf, KBRD_BUF_LENGTH);
+      memmove(kbrd_buf, kbrd_buf + KBRD_BUF_LENGTH, writeBytes);
+      memset(kbrd_buf + writeBytes, NULL_SCANCODE, KBRD_BUF_LENGTH);
+      line_marker = writeBytes;
     }
-	  kbrd_buf_length = line_marker - nbytes;
-
+    
     sti();
     read_lock = 0;
     is_enter = 0;
     return 0;
 }
 
+
+/*
+* terminal_write
+*   DESCRIPTION: Writes first nbytes chars from buf to screen
+*   INPUTS:         uint8_t* buf: buffer to be written
+*                   int32_t nbytes: number of chars to write
+*   OUTPUTS:        none
+*   RETURN VALUE:   none
+*   SIDE EFFECTS:   Writes to screen 
+*
+*/
 int32_t terminal_write(const uint8_t* buf, int32_t nbytes)
 {
     if(buf == NULL)
@@ -82,7 +126,8 @@ int32_t terminal_write(const uint8_t* buf, int32_t nbytes)
 *   INPUTS:         none
 *   OUTPUTS:        none
 *   RETURN VALUE:   none
-*   SIDE EFFECTS:   Sends data to Keyboard to initialize it
+*   SIDE EFFECTS:   Sends data to Keyboard to initialize it and initializes
+*   misc keyboard values
 *
 */
 void kbrd_init() {
@@ -100,7 +145,8 @@ void kbrd_init() {
 *   INPUTS:             none
 *   OUTPUTS:            none    
 *   RETURN VALUE:       none
-*   SIDE EFFECTS:       Takes appropriate action for some interrupt receieved by Keyboard, and ensures keyboard is left in proper state
+*   SIDE EFFECTS:       Takes appropriate action for some interrupt receieved by Keyboard, 
+*   and ensures keyboard is left in proper state
 *
 */
 void kbrd_int() {
@@ -142,8 +188,8 @@ void kbrd_int() {
       else if(scancode == ENTER_PRESS)
       {
           putc(key);
-          line_marker++;
-          kbrd_buf[line_marker] = ENTER_SCANCODE;
+          // kbrd_buf[line_marker] = ENTER_SCANCODE;
+          // line_marker++;
           is_enter = 1;
           kbrd_buf_length = 0;
           if(read_lock == 0)
