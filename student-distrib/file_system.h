@@ -41,14 +41,14 @@ int32_t read_data (uint32_t inode_index, uint32_t offset, uint8_t* buf, uint32_t
 void print_file(dentry_t* file);
 
 int32_t file_open (const uint8_t* filename, int32_t * fd);
-int32_t file_close (int32_t fd);
-int32_t file_write (int32_t fd, const void* buf, int32_t nbytes);
-int32_t file_read (int32_t fd, uint8_t* buf, int32_t nbytes, uint32_t * offset);
+int32_t file_close (int32_t * fd);
+int32_t file_write (int32_t* fd, const void* buf, int32_t nbytes);
+int32_t file_read (int32_t* fd, uint8_t* buf, int32_t nbytes, uint32_t * offset);
 
 int32_t dir_open (const uint8_t* filename, int32_t * fd);
-int32_t dir_close (int32_t fd);
-int32_t dir_write (int32_t fd, const void* buf, int32_t nbytes);
-int32_t dir_read (int32_t fd, uint8_t* buf, int32_t nbytes, uint32_t * offset);
+int32_t dir_close (int32_t* fd);
+int32_t dir_write (int32_t* fd, const void* buf, int32_t nbytes);
+int32_t dir_read (int32_t* fd, uint8_t* buf, int32_t nbytes, uint32_t * offset);
 
 
 #endif

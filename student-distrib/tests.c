@@ -273,13 +273,30 @@ int test_dir_open(){
 	uint8_t buf[32];
 	int i;
 	int num_bytes;
-	while((num_bytes = dir_read (fd , buf, 32, &offset))){
+	while((num_bytes = dir_read (&fd , buf, 32, &offset))){
 		for(i = 0; i<num_bytes; i++){
 			putc(buf[i]);
 		}
 		printf("\n");
 	}
 	return PASS;
+}
+
+int open_file(const int8_t* fname){
+	int32_t fd;
+	file_open((uint8_t*)fname,&fd);
+	printf("%d",fd);
+	file_close(&fd);
+	if(fd==0){
+		return PASS;
+	}
+	return FAIL;
+}
+
+int open_dir(const int8_t* fname){
+	int32_t fd;
+	if ( 0 == dir_open((uint8_t*)fname,&fd)) return PASS;
+	else return FAIL;
 }
 /* Checkpoint 3 tests */
 /* Checkpoint 4 tests */
@@ -301,4 +318,6 @@ void launch_tests(){
 	// TEST_OUTPUT("test_dir_open", test_dir_open());
 	// TEST_OUTPUT("print_file_test", print_file_test("frame1.txt"));
 	// terminal_keyboard_test();
+	//TEST_OUTPUT("open_file",open_file("frame1.txt"));
+	TEST_OUTPUT("open_dir",open_dir("frame1.txt"));
 }

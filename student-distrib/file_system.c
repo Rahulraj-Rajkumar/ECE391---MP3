@@ -89,7 +89,7 @@ void print_file(dentry_t* file){
     uint8_t buf[NUM_BYTES];
     uint32_t i = 0;
     int j, num_bytes;
-    while((num_bytes = file_read(file->inode_num, buf, NUM_BYTES, &i)))
+    while((num_bytes = file_read((int32_t*)file->inode_num, buf, NUM_BYTES, &i)))
         for(j = 0; j < num_bytes; j++) putc(buf[j]);
     printf("\n");
 }
@@ -101,18 +101,18 @@ int32_t file_open (const uint8_t* filename, int32_t * fd){
     return SUCCESS;
 }
 
-int32_t file_close (int32_t fd){
-    fd = 0;
+int32_t file_close (int32_t * fd){
+    * fd  = 0;
     return SUCCESS;
 }
 
-int32_t file_write (int32_t fd, const void* buf, int32_t nbytes){
+int32_t file_write (int32_t * fd, const void* buf, int32_t nbytes){
     return FAILURE;
 }
 
-int32_t file_read (int32_t fd, uint8_t* buf, int32_t nbytes, uint32_t * offset){
+int32_t file_read (int32_t* fd, uint8_t* buf, int32_t nbytes, uint32_t * offset){
     uint32_t read;
-    read = read_data(fd,*offset,buf,nbytes);
+    read = read_data(*fd,*offset,buf,nbytes);
     if(read > 0) *offset += read;
     return read;
 }
@@ -124,15 +124,15 @@ int32_t dir_open (const uint8_t* filename, int32_t * fd){
     return SUCCESS;
 }
 
-int32_t dir_close (int32_t fd){
+int32_t dir_close (int32_t * fd){
     return SUCCESS;
 }
 
-int32_t dir_write (int32_t fd, const void* buf, int32_t nbytes){
+int32_t dir_write (int32_t * fd, const void* buf, int32_t nbytes){
     return FAILURE;
 }
 
-int32_t dir_read (int32_t fd, uint8_t* buf, int32_t nbytes, uint32_t * offset){
+int32_t dir_read (int32_t * fd, uint8_t* buf, int32_t nbytes, uint32_t * offset){
     dentry_t dir;
     if(-1 == read_dentry_by_index(*offset, &dir)) return FAILURE;
     if(nbytes > strlen(dir.file_name)) nbytes = strlen(dir.file_name);
