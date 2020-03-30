@@ -6,19 +6,18 @@ boot_block_t* boot_block;
 #define NUM_BYTES 50
 
 /* init_file_system
- * Inputs: 
- * Outputs: 
- * Side Effects: 
- * Coverage:
- * Files: 
+ * Inputs: uint32_t file_system_begin, uint32_t file_system_end
+ * Outputs: 0 if work -1, if not
+ * Side Effects: sets up boot block
  */
 int32_t init_file_system (uint32_t file_system_begin, uint32_t file_system_end){
+    //set up possible boot block based on the beginning of the file system
     boot_block_t* possible_boot_block = (boot_block_t*) file_system_begin;
 
+    // if out of bounds fail
     if(possible_boot_block->num_dentries > NUM_DENTRIES) return FAILURE;
 
-    //if(possible_boot_block + possible_boot_block->num_dentries + possible_boot_block->num_data_blocks + 1 != (boot_block_t*)file_system_end) return FAILURE;
-
+    //set boot block
     boot_block = possible_boot_block;
     return SUCCESS;
 }
@@ -104,11 +103,21 @@ int32_t read_data (uint32_t inode_index, uint32_t offset, uint8_t* buf, uint32_t
     return num_bytes;
 }
 
+
+/* print_file
+ * Inputs: dentry_t* file
+ * Outputs: prints the contents of the file
+ * Side Effects: none
+ */
 void print_file(dentry_t* file){
+
+    //print file name and file type
     printf("File Name: ");
     printf(file->file_name);
     printf("\n");
     printf("File Type: ");
+
+    //prints either rtc, directory or file as type depending on what the value of file type is
     switch (file->file_type)
     {
     case 0 :
@@ -123,9 +132,13 @@ void print_file(dentry_t* file){
     default:
         return;
     }
+
+    //prints the inode number and length
     printf("inode Num: %d\n", file->inode_num);
     inode_t* inode = (inode_t*)boot_block+(file->inode_num+1);
     printf("inode Length in B: %d\n", inode->length);
+
+    //prints the file contents by using file_read to fill the buf
     printf("File Contents:\n");
     uint8_t buf[NUM_BYTES];
     uint32_t i = 0;
