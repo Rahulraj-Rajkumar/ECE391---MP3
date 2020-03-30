@@ -238,7 +238,6 @@ void backspace_helper(){
  * Return Value: void
  *  Function: Output a character to the console */
 void putc(uint8_t c) {
-    int comp;
     if(c == '\n' || c == '\r') {
         screen_y++;
         screen_x = 0;
