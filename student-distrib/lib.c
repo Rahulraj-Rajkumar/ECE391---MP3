@@ -24,6 +24,36 @@ void clear(void) {
     }
 }
 
+
+/* void reset(void);
+ * Inputs: void
+ * Return Value: none
+ * Function: Clears video memory
+ * and resets cursor to top of screen */
+void reset(void) {
+    int32_t i;
+    for (i = 0; i < NUM_ROWS * NUM_COLS; i++) {
+        *(uint8_t *)(video_mem + (i << 1)) = ' ';
+        *(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB;
+    }
+    screen_x = 0;
+    screen_y = 0;
+    update_cursor();
+}
+
+
+/* void update_cursor();
+ * Inputs: none
+ * Return Value: none
+ * Function: updates cursor to proper location */
+void update_cursor(){
+	outb(0x0F, 0x3D4);
+	outb((unsigned char)(((screen_y * NUM_COLS) + screen_x) & 0xFF), 0x3D4 + 1);
+    outb(0x0E, 0x3D4);
+	outb((unsigned char)((((screen_y * NUM_COLS) + screen_x)>>8) & 0xFF), 0x3D4 + 1);
+}
+
+
 /* Standard printf().
  * Only supports the following format strings:
  * %%  - print a literal '%' character
@@ -164,12 +194,82 @@ int32_t puts(int8_t* s) {
 }
 
 
+/* void vert_scroll();
+ *   Inputs: none
+ *   Return Value: none
+ *    Function: scrolls screen when last line is crossed */
+void vert_scroll(){
+    int32_t i;
+    for(i=0; i<(NUM_ROWS - 1)*NUM_COLS; i++) {
+        *(uint8_t *)(video_mem + (i << 1)) = *(uint8_t *)(video_mem + ((i + NUM_COLS) << 1));
+        *(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB;
+    }
+    for(i=(NUM_ROWS - 1)*NUM_COLS; i<NUM_ROWS*NUM_COLS; i++){
+        *(uint8_t *)(video_mem + (i << 1)) = ' ';
+        *(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB;
+    }
+}
+
+
+/* void backspace_helper();
+ *   Inputs: none
+ *   Return Value: none
+ *    Function: handles backspace input from keyboard */
+void backspace_helper(){
+    int tempy = 0;
+    if(screen_x == 0){
+        screen_x = NUM_COLS - 1;
+        screen_y--;
+        tempy = screen_y;
+        putcforcenoscroll(' ');
+        screen_x = NUM_COLS - 1;
+        screen_y = tempy;
+    }
+    else{
+        screen_x--;
+        putc(' ');
+        screen_x--;
+    }
+    update_cursor();
+}
 
 /* void putc(uint8_t c);
  * Inputs: uint_8* c = character to print
  * Return Value: void
  *  Function: Output a character to the console */
 void putc(uint8_t c) {
+    int comp;
+    if(c == '\n' || c == '\r') {
+        screen_y++;
+        screen_x = 0;
+        if(screen_y > NUM_ROWS - 1)
+        {
+            vert_scroll();
+            screen_y = NUM_ROWS - 1;
+        }
+    } else {
+        *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = c;
+        *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = ATTRIB;
+        screen_x++;
+        if(screen_y + (screen_x / NUM_COLS) == NUM_ROWS)
+        {
+            vert_scroll();
+            screen_y = NUM_ROWS - 1;
+        }
+        else
+        screen_y =  (screen_y + (screen_x / NUM_COLS)) % NUM_ROWS;
+        screen_x = screen_x % NUM_COLS;
+    }
+    update_cursor();
+}
+
+
+/* void putcforcenoscroll(uint8_t c);
+ * Inputs: uint_8* c = character to print
+ * Return Value: void
+ *  Function: Output a character to the console
+ * but dont scroll the page (used for backspace) */
+void putcforcenoscroll(uint8_t c) {
     if(c == '\n' || c == '\r') {
         screen_y++;
         screen_x = 0;
@@ -177,20 +277,10 @@ void putc(uint8_t c) {
         *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = c;
         *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = ATTRIB;
         screen_x++;
-        if(screen_x >= NUM_COLS)
-        {
-            screen_x = 0;
-            screen_y = ((screen_y + 1) % NUM_ROWS);
-            int32_t i;
-            for (i = screen_y * NUM_COLS; i < (screen_y + 1) * NUM_COLS; i++) {
-                *(uint8_t *)(video_mem + (i << 1)) = ' ';
-                *(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB;
-            }
-        }
-
         screen_x %= NUM_COLS;
         screen_y = (screen_y + (screen_x / NUM_COLS)) % NUM_ROWS;
     }
+    update_cursor();
 }
 
 

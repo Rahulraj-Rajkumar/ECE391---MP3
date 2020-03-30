@@ -199,6 +199,6 @@ void launch_tests(){
 	// page_doesnt_exist_test_start();
 	// page_doesnt_exist_test_end();
 	// page_does_exist_test();
-	 // rtc_test();
+	// rtc_test();
 	// syscall_test();
 }
