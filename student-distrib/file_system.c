@@ -142,8 +142,9 @@ void print_file(dentry_t* file){
     printf("File Contents:\n");
     uint8_t buf[NUM_BYTES];
     uint32_t i = 0;
+    int32_t fd = file->inode_num;
     int j, num_bytes;
-    while((num_bytes = file_read((int32_t*)file->inode_num, buf, NUM_BYTES, &i)))
+    while((num_bytes = file_read(&fd, buf, NUM_BYTES, &i)))
         for(j = 0; j < num_bytes; j++) putc(buf[j]);
     printf("\n");
 }
