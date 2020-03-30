@@ -151,8 +151,8 @@ void entry(unsigned long magic, unsigned long addr) {
     kbrd_init();
     init_paging();
 
-    // change_rate(1024);                   // 14 is an artbitrarily "large" number to make interrupts come slower from RTC
-
+    // change_rate(1024);                   
+    
     /* Enable interrupts */
     /* Do not enable the following until after you have set up your
      * IDT correctly otherwise QEMU will triple fault and simple close

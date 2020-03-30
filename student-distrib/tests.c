@@ -9,6 +9,8 @@
 #define PASS 1
 #define FAIL 0
 
+#define KEYBOARD_TEST_BUF 	5
+
 /* format these macros as you see fit */
 
 #define TEST_HEADER 	\
@@ -185,13 +187,21 @@ void syscall_test() {
 
 /* Checkpoint 2 tests */
 
+/* terminal_keyboard_test
+ * 
+ * Inputs: None
+ * Outputs: None
+ * Side Effects: Tests for typing and reading typed info by parsing typed data
+ * Coverage: KEYBOARD
+ * Files: keyboard.c
+ */
 void terminal_keyboard_test() {
-	uint8_t buf[5];
+	uint8_t buf[KEYBOARD_TEST_BUF];
 	printf("Hella finna terminal read/write testing vro (5 char buffer)\n");
 		while(1)
 		{
-			terminal_read(buf, 5);
-			terminal_write(buf, 5);
+			terminal_read(buf, KEYBOARD_TEST_BUF);
+			terminal_write(buf, KEYBOARD_TEST_BUF);
 		}
 }
 
@@ -208,21 +218,21 @@ void terminal_keyboard_test() {
 void rtc_write_test() {
 	TEST_HEADER;
 	uint32_t * testRate;
-	*testRate = 2;
+	*testRate = DEFAULT_FREQ;
 	uint32_t i;
 
 	initialize_rtc();
-	rtc_open();
+	rtc_open(0);
 
-	while (*testRate <= 1024) {
+	while (*testRate <= FREQ_UPPER_BOUND) {
 		rtc_write(0, testRate);
 
 		// display "test" 25 times at each possibly frequency
 		for (i = 0; i < 25; i++) 
-			rtc_read();
+			rtc_read(0);
 		printf ("SPEEDITUP");
 		
-		*testRate *= 2;
+		*testRate *= POWER_OF_TWO;
 
 	}
 
@@ -289,6 +299,6 @@ void launch_tests(){
 	// syscall_test();
 	// rtc_write_test();
 	// TEST_OUTPUT("test_dir_open", test_dir_open());
-	TEST_OUTPUT("print_file_test", print_file_test("frame1.txt"));
-	terminal_keyboard_test();
+	// TEST_OUTPUT("print_file_test", print_file_test("frame1.txt"));
+	// terminal_keyboard_test();
 }

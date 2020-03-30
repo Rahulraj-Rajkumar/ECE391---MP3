@@ -23,6 +23,7 @@
 
 #define DEFAULT_FREQ                2
 #define FREQ_UPPER_BOUND            1024
+#define POWER_OF_TWO                2
 
 void initialize_rtc();
 
@@ -30,9 +31,9 @@ void rtc_int();
 
 void change_rate(uint32_t rate);
 
-uint32_t rtc_open();
-uint32_t rtc_close();
-uint32_t rtc_read();
+uint32_t rtc_open(uint32_t fileDesc);
+uint32_t rtc_close(uint32_t fileDesc);
+uint32_t rtc_read(uint32_t fileDesc);
 uint32_t rtc_write(uint32_t fileDesc, uint32_t * buf);
 
 #endif

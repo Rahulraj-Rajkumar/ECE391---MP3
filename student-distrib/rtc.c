@@ -116,7 +116,7 @@ void change_rate(uint32_t rate) {
 *   RETURN VALUE:   0 for success
 *   SIDE EFFECTS:   none
 */
-uint32_t rtc_open() {
+uint32_t rtc_open(uint32_t fileDesc) {
     // done
     change_rate(DEFAULT_FREQ);
     return 0;
@@ -130,7 +130,7 @@ uint32_t rtc_open() {
 *   RETURN VALUE:   0 for success
 *   SIDE EFFECTS:   none
 */
-uint32_t rtc_close() {
+uint32_t rtc_close(uint32_t fileDesc) {
     // done
     return 0;
 }
@@ -145,7 +145,7 @@ uint32_t rtc_close() {
 *   SIDE EFFECTS:   none
 *  
 */
-uint32_t rtc_read() {
+uint32_t rtc_read(uint32_t fileDesc) {
     /* volatile variable allows us to know when to read
    only executes read function when new interrupt has occurred */
 
@@ -174,7 +174,7 @@ uint32_t rtc_write(uint32_t fileDesc,  uint32_t * buf) {
     rate = *buf;
 
     // rate program wants to set rtc to must be valid
-    if (rate > 1024 || rate < 2)
+    if (rate > FREQ_UPPER_BOUND || rate < DEFAULT_FREQ)
         return -1;
 
     /* for sake of rtc_write(), rate must be power of 2 */
@@ -186,4 +186,3 @@ uint32_t rtc_write(uint32_t fileDesc,  uint32_t * buf) {
 
     return 0;
 }
-
