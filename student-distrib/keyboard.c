@@ -56,7 +56,7 @@ int32_t terminal_read(uint8_t* buf, int32_t nbytes)
     } 
     else
     {
-        writeBytes = line_marker - nbytes;
+        writeBytes = line_marker - (nbytes - 1);
     }
     
     if(nbytes < KBRD_BUF_LENGTH)
@@ -67,7 +67,7 @@ int32_t terminal_read(uint8_t* buf, int32_t nbytes)
       }
       kbrd_read_buf[nbytes - 1] = '\n';
       memcpy(buf, kbrd_read_buf, nbytes);
-      memmove(kbrd_buf, kbrd_buf + nbytes, writeBytes);
+      memmove(kbrd_buf, kbrd_buf + nbytes - 1, writeBytes);
       memset(kbrd_buf + writeBytes, NULL_SCANCODE, nbytes);
       line_marker = writeBytes;
     }
@@ -79,7 +79,7 @@ int32_t terminal_read(uint8_t* buf, int32_t nbytes)
       }
       kbrd_read_buf[KBRD_BUF_LENGTH - 1] = '\n';
       memcpy(buf, kbrd_read_buf, KBRD_BUF_LENGTH);
-      memmove(kbrd_buf, kbrd_buf + KBRD_BUF_LENGTH, writeBytes);
+      memmove(kbrd_buf, kbrd_buf + KBRD_BUF_LENGTH - 1, writeBytes);
       memset(kbrd_buf + writeBytes, NULL_SCANCODE, KBRD_BUF_LENGTH);
       line_marker = writeBytes;
     }

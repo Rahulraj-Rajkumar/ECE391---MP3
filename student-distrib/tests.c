@@ -216,5 +216,5 @@ void launch_tests(){
 	// page_does_exist_test();
 	// rtc_test();
 	// syscall_test();
-	// terminal_keyboard_test();
+	 terminal_keyboard_test();
 }
