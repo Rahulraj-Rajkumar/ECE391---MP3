@@ -152,9 +152,6 @@ void rtc_test(){
 	
 	// send_eoi(RTC_IRQ);
 
-	// while(1){
-		test_interrupts();
-		//wait for some rtc interrupt
 	
 	/* in order to leave RTC in usable (able to send more interrupts) state 
       after handling the current interrupt, must read register C */
@@ -197,7 +194,43 @@ void terminal_keyboard_test() {
 		}
 }
 
+/* rtc_write_test
+ * 
+ * WIP
+ * Inputs: None
+ * Outputs: None
+ * Side Effects: Opens RTC, checks to see if frequency is changing properly using
+ * 				 write and change_rate functions
+ * Coverage: RTC
+ * Files: rtc.c
+ */
+void rtc_write_test() {
+	TEST_HEADER;
+	uint32_t * testRate;
+	*testRate = 2;
+	uint32_t i;
 
+	initialize_rtc();
+	rtc_open();
+
+	while (*testRate <= 1024) {
+		rtc_write(0, testRate);
+
+		// display "test" 25 times at each possibly frequency
+		for (i = 0; i < 25; i++) 
+			rtc_read();
+		printf ("SPEEDITUP");
+		
+		*testRate *= 2;
+
+	}
+
+
+	/* in order to leave RTC in usable (able to send more interrupts) state 
+      after handling the current interrupt, must read register C */
+    outb(REGISTERC, RTCPORT);
+    inb(RTCDATA);
+}
 
 
 /* Checkpoint 3 tests */
@@ -216,5 +249,6 @@ void launch_tests(){
 	// page_does_exist_test();
 	// rtc_test();
 	// syscall_test();
-	 terminal_keyboard_test();
+	// terminal_keyboard_test();
+	// rtc_write_test();
 }

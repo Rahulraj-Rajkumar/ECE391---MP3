@@ -49,21 +49,20 @@ void initialize_rtc() {
 */
 void rtc_int()
 {
+    // UNCOMMENT "printf("test")" TO SEE RTC_WRITE TEST WORK
     readFlag = 1;
     // printf("test ");
 
-    // VINNY YOU NEED TO USE THIS TEST_INTERRUPTS FUNCTION IN YOUR UNIT TEST FOR RTC SOMEHOW
     // test_interrupts();
         // send_eoi(RTC_IRQ);
 
-    // test_interrupts();
 
    /* in order to leave RTC in usable (able to send more interrupts) state 
       after handling the current interrupt, must read register C */
     outb(REGISTERC, RTCPORT);
     inb(RTCDATA);
 
-    readFlag = 0;
+    // readFlag = 0;
     send_eoi(RTC_IRQ);
 }
 
