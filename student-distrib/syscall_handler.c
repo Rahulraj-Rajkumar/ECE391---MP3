@@ -1,4 +1,5 @@
 #include "syscall_handler.h"
+#include "int_wrapper.h"
 
 // File Descriptor struct. If you need more info, RTDC 8.2
 typedef struct fd_t {
@@ -26,7 +27,7 @@ typedef struct pcb_t {
 *   SIDE EFFECTS:   Initializes paging
 *
 */
-int32_t halt(unit8_t status) {
+int32_t halt(uint8_t status) {
     return 0;
 }
 
