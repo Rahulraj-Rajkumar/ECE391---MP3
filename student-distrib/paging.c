@@ -44,5 +44,8 @@ void init_paging(){
 		:
 		: "eax"
 	);
+}
 
+int32_t new_process(int process_num){
+	page_directory[USER_PROCESS_INDEX] = PROCESS_LOC(process_num) | PDE_PS | PDE_US | PDE_RW | PDE_P;
 }

@@ -17,6 +17,8 @@ typedef struct pcb_t {
     // or child process and other shit idk.
 } pcb_t;
 
+int num_processes
+
 /*
 * halt
 *   DESCRIPTION: Sets up paging 
@@ -40,6 +42,24 @@ int32_t halt(unit8_t status) {
 *
 */
 int32_t execute(const uint8_t* command) {
+    uint8_t fname[NAME_SIZE];
+    uint8_t buf[4];
+    dentry_t dentry;
+    int32_t fd;
+    int i = 0;
+    for(i = 0; i < 32 && command[i] != ' '; i++) fname[i] = command[i];
+
+
+    if(file_open(fname, &fd)) return FAILURE;
+    if(file_read(fd, buf, 4, 0)) return FAILURE;
+    if(strncmp(buf, "ELF", 4)) return FAILURE;
+
+    new_process(num_processes);
+
+    
+
+    
+    
     return 0;
 }
 
