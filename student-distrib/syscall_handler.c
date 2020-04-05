@@ -147,3 +147,43 @@ int32_t set_handler(int32_t signum, void* handler_address) {
 int32_t sigreturn(void) {
     return 0;
 }
+
+/* TODO
+* user_execute_helper
+*   DESCRIPTION: Makes sure user level code is executed
+*                at privelege level 3
+*   INPUTS:         process_id: 0 indexed pid of current pcb
+*   OUTPUTS:        none
+*   RETURN VALUE:   none    
+*   SIDE EFFECTS:   Switches execution privilege from 0 to 3
+*
+*/
+void user_execute_helper(int32_t process_id) {
+
+        // Get value for EIP from byte 24 onwards from the user memory start address
+        uint32_t EIP = (*(uint32_t *)((char *)USR_START_ADDR + ADDR_DIST_EIP));
+
+        // set TSS Kernel mode stack to proper value
+        tss.esp0 = KERNEL_MEM_END - (process_id) * K_STACK_SIZE - WORD_SIZE;
+        
+        // set TSS Kernel stack segment to proper value
+        tss.ss0 = KERNEL_DS;
+
+        // Set DS to the proper value then Push SS, ESP, 
+        // EFLAGS, CS, and EIP to stack in that order then iret
+        asm volatile("                        \n\
+            andl    $0x00FF, %%eax            \n\
+            movw    %%ax, %%ds                \n\
+            pushl   %%eax                     \n\
+            pushl   %%edx                     \n\
+            pushfl                            \n\
+            pushl   %%ecx                     \n\
+            pushl   %%ebx                     \n\
+            iret                              \n\
+            "
+            : 
+            : "a"(USER_DS), "b"(EIP), "c"(USER_CS), "d"(USR_STACK_ADDR)
+            : "cc"
+        );
+}
+
