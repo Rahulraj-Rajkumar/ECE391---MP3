@@ -16,3 +16,133 @@ typedef struct pcb_t {
     // and idk what that means.  Probably u wanna store like the parent pcb pointer and also like if it is parent
     // or child process and other shit idk.
 } pcb_t;
+
+/*
+* halt
+*   DESCRIPTION: Sets up paging 
+*   INPUTS:         none
+*   OUTPUTS:        none
+*   RETURN VALUE:   none
+*   SIDE EFFECTS:   Initializes paging
+*
+*/
+int32_t halt(unit8_t status) {
+    return 0;
+}
+
+/*
+* execute
+*   DESCRIPTION: Sets up paging 
+*   INPUTS:         none
+*   OUTPUTS:        none
+*   RETURN VALUE:   none
+*   SIDE EFFECTS:   Initializes paging
+*
+*/
+int32_t execute(const uint8_t* command) {
+    return 0;
+}
+
+/*
+* read
+*   DESCRIPTION: Sets up paging 
+*   INPUTS:         none
+*   OUTPUTS:        none
+*   RETURN VALUE:   none
+*   SIDE EFFECTS:   Initializes paging
+*
+*/
+int32_t read(int32_t fd, void* buf, int32_t nbytes) {
+    return 0;
+}
+
+/*
+* write
+*   DESCRIPTION: Sets up paging 
+*   INPUTS:         none
+*   OUTPUTS:        none
+*   RETURN VALUE:   none
+*   SIDE EFFECTS:   Initializes paging
+*
+*/
+int32_t write(int32_t fd, const void* buf, int32_t nbytes) {
+    return 0;
+}
+
+/*
+* open
+*   DESCRIPTION: Sets up paging 
+*   INPUTS:         none
+*   OUTPUTS:        none
+*   RETURN VALUE:   none
+*   SIDE EFFECTS:   Initializes paging
+*
+*/
+int32_t open(const uint8_t* filename) {
+    return 0;
+}
+
+/*
+* close
+*   DESCRIPTION: Sets up paging 
+*   INPUTS:         none
+*   OUTPUTS:        none
+*   RETURN VALUE:   none
+*   SIDE EFFECTS:   Initializes paging
+*
+*/
+int32_t close(int32_t fd) {
+    return 0;
+}
+
+/* TODO
+* getargs
+*   DESCRIPTION: Sets up paging 
+*   INPUTS:         none
+*   OUTPUTS:        none
+*   RETURN VALUE:   none
+*   SIDE EFFECTS:   Initializes paging
+*
+*/
+int32_t getargs(uint8_t* buf, int32_t nbytes) {
+    return 0;
+}
+
+/* TODO
+* vidmap
+*   DESCRIPTION: Sets up paging 
+*   INPUTS:         none
+*   OUTPUTS:        none
+*   RETURN VALUE:   none
+*   SIDE EFFECTS:   Initializes paging
+*
+*/
+int32_t vidmap(uint8_t** screen_start) {
+    return 0;
+}
+
+/* TODO
+* set_handler
+*   DESCRIPTION: Sets up paging 
+*   INPUTS:         none
+*   OUTPUTS:        none
+*   RETURN VALUE:   none
+*   SIDE EFFECTS:   Initializes paging
+*
+*/
+int32_t set_handler(int32_t signum, void* handler_address) {
+    return 0;
+}
+
+/* TODO
+* sigreturn
+*   DESCRIPTION: Sets up paging 
+*   INPUTS:         none
+*   OUTPUTS:        none
+*   RETURN VALUE:   none
+*   SIDE EFFECTS:   Initializes paging
+*
+*/
+int32_t sigreturn(void) {
+    return 0;
+}
