@@ -3,7 +3,7 @@
 // File Descriptor struct. If you need more info, RTDC 8.2
 typedef struct fd_t {
     // I got no clue about these types so if another type is more convenient go for it
-    uint32_t fop_jump_table[8];
+    uint32_t (*fop_jump_table[NUM_FOPS])();
     int32_t inode;
     int32_t file_position;
     uint32_t flags;
@@ -11,14 +11,26 @@ typedef struct fd_t {
 
 // Process Control Block struct. If you need more info, RTDC 6.3.5
 typedef struct pcb_t {
-    fd_t file_array[8];
+    fd_t file_array[MAX_OPEN_FILES];
+    int8_t pid;
+    uint32_t parent_ksp;
     // There should be a bunch more shit stored in this struct but the documentation says "signal information"
     // and idk what that means.  Probably u wanna store like the parent pcb pointer and also like if it is parent
     // or child process and other shit idk.
 } pcb_t;
 
-int num_processes
+int num_processes;
 
+uint32_t (*default_fops_tables[MAX_OPEN_FILES][NUM_FOPS])() = {
+{no_func, terminal_read, no_func, no_func},
+{no_func, no_func, terminal_write, no_func},
+{no_func, no_func, no_func, no_func},
+{no_func, no_func, no_func, no_func},
+{no_func, no_func, no_func, no_func},
+{no_func, no_func, no_func, no_func},
+{no_func, no_func, no_func, no_func},
+{no_func, no_func, no_func, no_func}
+};
 /*
 * halt
 *   DESCRIPTION: Sets up paging 
@@ -28,7 +40,7 @@ int num_processes
 *   SIDE EFFECTS:   Initializes paging
 *
 */
-int32_t halt(unit8_t status) {
+int32_t halt(uint8_t status) {
     return 0;
 }
 
@@ -46,7 +58,7 @@ int32_t execute(const uint8_t* command) {
     uint8_t buf[4];
     dentry_t dentry;
     int32_t fd;
-    int i = 0;
+    int i, j;
     for(i = 0; i < 32 && command[i] != ' '; i++) fname[i] = command[i];
 
 
@@ -54,11 +66,26 @@ int32_t execute(const uint8_t* command) {
     if(file_read(fd, buf, 4, 0)) return FAILURE;
     if(strncmp(buf, "ELF", 4)) return FAILURE;
 
-    new_process(num_processes);
 
-    
 
-    
+    new_process(++num_processes);
+
+    // Vishnu to implement loader here
+
+    pcb_t* pcb = 0x800000 - KSTACK_SIZE * num_processes;
+
+    for(i = 0; i < MAX_OPEN_FILES; i++){
+        for(j = 0; j < NUM_FOPS; j++){
+            pcb->file_array[i].fop_jump_table[j] = default_fops_tables[i][j];
+        }
+        pcb->file_array[i].inode = 0;
+        pcb->file_array[i].file_position = 0;
+        pcb->file_array[i].flags = (i < 2) ? 1 : 0;
+    }
+    pcb->pid = num_processes;
+    int esp;
+    asm("movl %%esp, %0" : "=r"(esp) :);
+    pcb->parent_ksp = esp;
     
     return 0;
 }
@@ -166,3 +193,5 @@ int32_t set_handler(int32_t signum, void* handler_address) {
 int32_t sigreturn(void) {
     return 0;
 }
+
+void no_func(){}

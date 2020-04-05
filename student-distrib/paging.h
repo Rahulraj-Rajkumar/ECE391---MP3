@@ -37,7 +37,7 @@
 
 #define DEFAULT_PTE         PTE_RW | PTE_P
 
-#define PROCESS_LOC(n)      (n+2) * PAGE_SIZE
+#define PROCESS_LOC(n)      (n+1) * PAGE_SIZE
 
 #define USER_PROCESS_INDEX  32
 void init_paging();
