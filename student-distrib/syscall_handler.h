@@ -8,7 +8,7 @@
 #include "keyboard.h"
 
 #define PCB_BITMASK 0xFFFFE000
-#define MAX_OPEN_FILES 8
+#define MAX_OPEN_PROCESSES 8
 #define KSTACK_SIZE 0x2000
 #define NUM_FOPS 4
 #define STDIN 0

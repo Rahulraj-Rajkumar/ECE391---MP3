@@ -22,7 +22,9 @@ typedef struct pcb_t {
 
 int num_processes;
 
-uint32_t (*default_fops_tables[MAX_OPEN_FILES][NUM_FOPS])() = {
+bool process_array[MAX_OPEN_PROCESSES]
+
+uint32_t (*default_fops_tables[MAX_OPEN_PROCESSES][NUM_FOPS])() = {
 {no_func, terminal_read, no_func, no_func},
 {no_func, no_func, terminal_write, no_func},
 {no_func, no_func, no_func, no_func},
@@ -75,7 +77,7 @@ int32_t execute(const uint8_t* command) {
 
     pcb_t* pcb = 0x800000 - KSTACK_SIZE * num_processes;
 
-    for(i = 0; i < MAX_OPEN_FILES; i++){
+    for(i = 0; i < MAX_OPEN_PROCESSES; i++){
         for(j = 0; j < NUM_FOPS; j++){
             pcb->file_array[i].fop_jump_table[j] = default_fops_tables[i][j];
         }
