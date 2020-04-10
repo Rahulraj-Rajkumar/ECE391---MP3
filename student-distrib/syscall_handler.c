@@ -12,7 +12,7 @@ typedef struct fd_t {
 
 // Process Control Block struct. If you need more info, RTDC 6.3.5
 typedef struct pcb_t {
-    fd_t file_array[MAX_OPEN_FILES];
+    fd_t file_array[MAX_OPEN_PROCESSES];
     int8_t pid;
     uint32_t parent_ksp;
     // There should be a bunch more shit stored in this struct but the documentation says "signal information"
@@ -20,9 +20,7 @@ typedef struct pcb_t {
     // or child process and other shit idk.
 } pcb_t;
 
-int num_processes;
-
-bool process_array[MAX_OPEN_PROCESSES]
+int process_array[MAX_OPEN_PROCESSES];
 
 uint32_t (*default_fops_tables[MAX_OPEN_PROCESSES][NUM_FOPS])() = {
 {no_func, terminal_read, no_func, no_func},
@@ -57,11 +55,15 @@ int32_t halt(uint8_t status) {
 *
 */
 int32_t execute(const uint8_t* command) {
+
     uint8_t fname[NAME_SIZE];
     uint8_t buf[4];
     dentry_t dentry;
     int32_t fd;
-    int i, j;
+    int i, j, pid;
+
+    if((pid = get_next_pid()) > 8) return FAILURE;
+
     for(i = 0; i < 32 && command[i] != ' '; i++) fname[i] = command[i];
 
 
@@ -71,11 +73,11 @@ int32_t execute(const uint8_t* command) {
 
 
 
-    new_process(++num_processes);
+    new_process(pid);
 
     // Vishnu to implement loader here
 
-    pcb_t* pcb = 0x800000 - KSTACK_SIZE * num_processes;
+    pcb_t* pcb = 0x800000 - KSTACK_SIZE * pid;
 
     for(i = 0; i < MAX_OPEN_PROCESSES; i++){
         for(j = 0; j < NUM_FOPS; j++){
@@ -85,7 +87,7 @@ int32_t execute(const uint8_t* command) {
         pcb->file_array[i].file_position = 0;
         pcb->file_array[i].flags = (i < 2) ? 1 : 0;
     }
-    pcb->pid = num_processes;
+    pcb->pid = pid;
     int esp;
     asm("movl %%esp, %0" : "=r"(esp) :);
     pcb->parent_ksp = esp;
@@ -238,3 +240,8 @@ void user_execute_helper(int32_t process_id) {
         );
 }
 
+int get_next_pid(){
+    int i;
+    for(i = 0; process_array[i] && i < 8; i++){}
+    return i + 1;
+}
