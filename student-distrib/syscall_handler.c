@@ -15,12 +15,17 @@ typedef struct pcb_t {
     fd_t file_array[MAX_OPEN_PROCESSES];
     int8_t pid;
     uint32_t parent_ksp;
+    int8_t parent_pid;
     // There should be a bunch more shit stored in this struct but the documentation says "signal information"
     // and idk what that means.  Probably u wanna store like the parent pcb pointer and also like if it is parent
     // or child process and other shit idk.
 } pcb_t;
 
 int process_array[MAX_OPEN_PROCESSES];
+
+int curr_pid;
+
+int first_process = 1;
 
 uint32_t (*default_fops_tables[MAX_OPEN_PROCESSES][NUM_FOPS])() = {
 {no_func, terminal_read, no_func, no_func},
@@ -66,7 +71,6 @@ int32_t execute(const uint8_t* command) {
 
     for(i = 0; i < 32 && command[i] != ' '; i++) fname[i] = command[i];
 
-
     if(file_open(fname, &fd)) return FAILURE;
     if(file_read(fd, buf, 4, 0)) return FAILURE;
     if(strncmp(buf, "ELF", 4)) return FAILURE;
@@ -75,9 +79,11 @@ int32_t execute(const uint8_t* command) {
 
     new_process(pid);
 
+    curr_pid = pid;
+
     // Vishnu to implement loader here
 
-    pcb_t* pcb = 0x800000 - KSTACK_SIZE * pid;
+    pcb_t* pcb = KERNEL_MEM_END - KSTACK_SIZE * pid;
 
     for(i = 0; i < MAX_OPEN_PROCESSES; i++){
         for(j = 0; j < NUM_FOPS; j++){
@@ -88,9 +94,15 @@ int32_t execute(const uint8_t* command) {
         pcb->file_array[i].flags = (i < 2) ? 1 : 0;
     }
     pcb->pid = pid;
+    
+
     int esp;
     asm("movl %%esp, %0" : "=r"(esp) :);
     pcb->parent_ksp = esp;
+
+    pcb->parent_pid = (first_process) ? 0 : ((pcb_t *)(esp & 0xFFFFE000))->pid;
+
+    first_process = 0;
     
     return 0;
 }
@@ -211,10 +223,10 @@ void no_func(){}
 *   SIDE EFFECTS:   Switches execution privilege from 0 to 3
 *
 */
-void user_execute_helper(int32_t process_id) {
+void return_to_user(int32_t process_id) {
 
         // Get value for EIP from byte 24 onwards from the user memory start address
-        uint32_t EIP = (*(uint32_t *)((char *)USR_START_ADDR + ADDR_DIST_EIP));
+        uint32_t EIP = (*(uint32_t *)(USR_START_ADDR + ADDR_DIST_EIP)   );
 
         // set TSS Kernel mode stack to proper value
         tss.esp0 = KERNEL_MEM_END - (process_id) * K_STACK_SIZE - WORD_SIZE;

@@ -15,10 +15,11 @@
 #define STDOUT 1
 #define KERNEL_MEM_END  0x800000
 #define K_STACK_SIZE    0x2000
-#define WORD_SIZE       0x4
+#define WORD_SIZE       4
 #define USR_START_ADDR  0x08048000
-#define ADDR_DIST_EIP   0x18
+#define ADDR_DIST_EIP   24
 #define USR_STACK_ADDR  0x8400000 - WORD_SIZE
+#define PCB_BITMASK     0xFFFFE000
 
 
 int32_t halt(uint8_t status);
