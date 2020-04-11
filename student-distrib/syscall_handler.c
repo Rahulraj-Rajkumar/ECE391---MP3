@@ -61,13 +61,15 @@ int32_t halt(uint8_t status) {
 *
 */
 int32_t execute(const uint8_t* command) {
-
     uint8_t fname[NAME_SIZE];
     uint8_t buf[4];
     dentry_t dentry;
     int32_t fd;
     int i, j, pid;
     int offset = 0;
+
+    if(!command) return FAILURE;
+
     if((pid = get_next_pid()) > MAX_OPEN_PROCESSES) return FAILURE;
 
     for(i = 0; i < 32 && command[i] != ' '; i++) fname[i] = command[i];
@@ -87,7 +89,7 @@ int32_t execute(const uint8_t* command) {
     pcb_t* pcb = KERNEL_MEM_END - KSTACK_SIZE * pid;
 
     for(i = 0; i < MAX_OPEN_PROCESSES; i++){
-        for(j = 0; j < NUM_FOPS; j++) pcb->file_array[i].fop_jump_table[j] = (i < 2) ? std_table[i] : nofunc_table;
+        for(j = 0; j < NUM_FOPS; j++) pcb->file_array[i].fop_jump_table[j] = (i < 2) ? std_table[i][j] : nofunc_table[j];
         pcb->file_array[i].inode = 0;
         pcb->file_array[i].file_position = 0;
         pcb->file_array[i].flags = (i < 2) ? 1 : 0;
@@ -119,6 +121,15 @@ int32_t execute(const uint8_t* command) {
 *
 */
 int32_t read(int32_t fd, void* buf, int32_t nbytes) {
+    dentry_t dentry;
+    int esp;
+    asm("movl %%esp, %0" : "=r"(esp) :);
+    pcb_t* pcb = (pcb_t *)(esp & 0xFFFFE000);
+
+    if(fd < 0 || fd >= MAX_OPEN_PROCESSES || !buf) return FAILURE;
+
+    pcb->file_array[fd].fop_jump_table[READ_INDEX](fd, buf, nbytes);
+
     return 0;
 }
 
@@ -132,6 +143,15 @@ int32_t read(int32_t fd, void* buf, int32_t nbytes) {
 *
 */
 int32_t write(int32_t fd, const void* buf, int32_t nbytes) {
+    dentry_t dentry;
+    int esp;
+    asm("movl %%esp, %0" : "=r"(esp) :);
+    pcb_t* pcb = (pcb_t *)(esp & 0xFFFFE000);
+
+    if(fd < 0 || fd >= MAX_OPEN_PROCESSES || !buf) return FAILURE;
+
+    pcb->file_array[fd].fop_jump_table[WRITE_INDEX](fd, buf, nbytes);
+
     return 0;
 }
 
@@ -145,7 +165,25 @@ int32_t write(int32_t fd, const void* buf, int32_t nbytes) {
 *
 */
 int32_t open(const uint8_t* filename) {
-    return 0;
+    dentry_t dentry;
+    int i, j, esp;
+    asm("movl %%esp, %0" : "=r"(esp) :);
+    pcb_t* pcb = (pcb_t *)(esp & 0xFFFFE000);
+
+    if(!filename) return FAILURE;
+
+    read_dentry_by_name(filename, &dentry);
+
+    for(i = 0; i < 8 && pcb->file_array[i].flags; i++);
+
+    if(i == 8) return FAILURE;
+
+    for(j = 0; j < NUM_FOPS; j++) pcb->file_array[i].fop_jump_table[j] = file_table[dentry.file_type][j];
+    pcb->file_array[i].inode = dentry.inode_num;
+    pcb->file_array[i].file_position = 0;
+    pcb->file_array[i].flags = 1;
+
+    return i;
 }
 
 /*
@@ -158,6 +196,15 @@ int32_t open(const uint8_t* filename) {
 *
 */
 int32_t close(int32_t fd) {
+    dentry_t dentry;
+    int esp;
+    asm("movl %%esp, %0" : "=r"(esp) :);
+    pcb_t* pcb = (pcb_t *)(esp & 0xFFFFE000);
+
+    if(fd < 0 || fd >= MAX_OPEN_PROCESSES) return FAILURE;
+
+    pcb->file_array[fd].fop_jump_table[CLOSE_INDEX](fd);
+
     return 0;
 }
 

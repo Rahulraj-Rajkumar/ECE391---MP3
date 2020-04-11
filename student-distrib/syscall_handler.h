@@ -22,7 +22,10 @@
 #define USR_STACK_ADDR  0x8400000 - WORD_SIZE
 #define PCB_BITMASK     0xFFFFE000
 #define NUM_FILE_TYPES  3
-
+#define READ_INDEX      0
+#define WRITE_INDEX     1
+#define OPEN_INDEX      2
+#define CLOSE_INDEX     3
 
 int32_t halt(uint8_t status);
 int32_t execute(const uint8_t* command);
