@@ -48,7 +48,39 @@ uint32_t (*file_table[NUM_FILE_TYPES][NUM_FOPS])() = {
 *
 */
 int32_t halt(uint8_t status) {
-    return 0;
+    pcb_t * curr_pcb = (pcb_t *)(K_MEM_END - curr_pid * K_STACK_SIZE);
+
+
+    if((curr_pcb->parent_esp & PCB_BITMASK) == NULL)
+    {
+        tss.esp0 = K_MEM_END;
+    }
+    else
+    {
+        add_newpage(curr_pid, K_MEM_END + curr_pcb->parent_pid * FOUR_MB);
+        tss.esp0 = K_MEM_END - K_STACK_SIZE * curr_pcb->parent_pid - WORD_SIZE;
+    }   
+
+    process_array[curr_pid] = 0;
+
+    asm volatile("              \n\
+        movl    %0, %%esp       \n\
+        movl    %1, %%ebp       \n\
+        movb    %2, %%eax       \n\
+        jmp     HALT_RET_LABEL  \n\
+        "
+        :
+        : "r" (curr_pcb->parent_esp), "r" (curr_pcb->parent_ebp), "r" (status)
+        : "cc"
+    );
+
+    asm volatile(
+		"HALT_RET_LABEL: \n\
+		leave \n\
+		ret \n\
+		"
+	);
+    return 0;    
 }
 
 /*
@@ -84,7 +116,7 @@ int32_t execute(const uint8_t* command) {
         
     curr_pid = pid;
 
-    pcb_t* pcb = KERNEL_MEM_END - KSTACK_SIZE * pid;
+    pcb_t* pcb = K_MEM_END - KSTACK_SIZE * pid;
 
     for(i = 0; i < MAX_OPEN_PROCESSES; i++){
         for(j = 0; j < NUM_FOPS; j++) pcb->file_array[i].fop_jump_table[j] = (i < 2) ? std_table[i] : nofunc_table;
@@ -231,7 +263,7 @@ void return_to_user(int32_t process_id) {
         uint32_t EIP = (*(uint32_t *)(USR_START_ADDR + ADDR_DIST_EIP)   );
 
         // set TSS Kernel mode stack to proper value
-        tss.esp0 = KERNEL_MEM_END - (process_id) * K_STACK_SIZE - WORD_SIZE;
+        tss.esp0 = K_MEM_END - (process_id) * K_STACK_SIZE - WORD_SIZE;
         
         // set TSS Kernel stack segment to proper value
         tss.ss0 = KERNEL_DS;

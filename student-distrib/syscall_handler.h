@@ -14,7 +14,8 @@
 #define NUM_FOPS 4
 #define STDIN 0
 #define STDOUT 1
-#define KERNEL_MEM_END  0x800000
+#define K_MEM_END  0x800000
+#define FOUR_MB    0x400000
 #define K_STACK_SIZE    0x2000
 #define WORD_SIZE       4
 #define USR_START_ADDR  0x08048000
