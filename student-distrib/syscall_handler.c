@@ -14,7 +14,8 @@ typedef struct fd_t {
 typedef struct pcb_t {
     fd_t file_array[MAX_OPEN_PROCESSES];
     int8_t pid;
-    uint32_t parent_ksp;
+    uint32_t parent_esp;
+    uint32_t parent_ebp;
     int8_t parent_pid;
     // There should be a bunch more shit stored in this struct but the documentation says "signal information"
     // and idk what that means.  Probably u wanna store like the parent pcb pointer and also like if it is parent
@@ -27,23 +28,23 @@ int curr_pid;
 
 int first_process = 1;
 
-uint32_t (*default_fops_tables[MAX_OPEN_PROCESSES][NUM_FOPS])() = {
-{no_func, terminal_read, no_func, no_func},
-{no_func, no_func, terminal_write, no_func},
-{no_func, no_func, no_func, no_func},
-{no_func, no_func, no_func, no_func},
-{no_func, no_func, no_func, no_func},
-{no_func, no_func, no_func, no_func},
-{no_func, no_func, no_func, no_func},
-{no_func, no_func, no_func, no_func}
+uint32_t (*nofunc_table[NUM_FOPS])() = {no_func, no_func, no_func, no_func}; 
+uint32_t (*std_table[2][NUM_FOPS])() = {
+{terminal_read, no_func, terminal_open, terminal_close}, 
+{no_func, terminal_write, terminal_open, terminal_close}
+};
+uint32_t (*file_table[NUM_FILE_TYPES][NUM_FOPS])() = {
+{rtc_read, rtc_write, rtc_open, rtc_close},
+{file_read, file_write, file_open, file_close},
+{dir_read, dir_write, dir_open, dir_close}
 };
 /*
 * halt
-*   DESCRIPTION: Sets up paging 
+*   DESCRIPTION:  
 *   INPUTS:         none
 *   OUTPUTS:        none
 *   RETURN VALUE:   none
-*   SIDE EFFECTS:   Initializes paging
+*   SIDE EFFECTS:   none
 *
 */
 int32_t halt(uint8_t status) {
@@ -52,11 +53,11 @@ int32_t halt(uint8_t status) {
 
 /*
 * execute
-*   DESCRIPTION: Sets up paging 
+*   DESCRIPTION:  
 *   INPUTS:         none
 *   OUTPUTS:        none
 *   RETURN VALUE:   none
-*   SIDE EFFECTS:   Initializes paging
+*   SIDE EFFECTS:   none
 *
 */
 int32_t execute(const uint8_t* command) {
@@ -67,7 +68,7 @@ int32_t execute(const uint8_t* command) {
     int32_t fd;
     int i, j, pid;
     int offset = 0;
-    if((pid = get_next_pid()) > 8) return FAILURE;
+    if((pid = get_next_pid()) > MAX_OPEN_PROCESSES) return FAILURE;
 
     for(i = 0; i < 32 && command[i] != ' '; i++) fname[i] = command[i];
 
@@ -86,9 +87,7 @@ int32_t execute(const uint8_t* command) {
     pcb_t* pcb = KERNEL_MEM_END - KSTACK_SIZE * pid;
 
     for(i = 0; i < MAX_OPEN_PROCESSES; i++){
-        for(j = 0; j < NUM_FOPS; j++){
-            pcb->file_array[i].fop_jump_table[j] = default_fops_tables[i][j];
-        }
+        for(j = 0; j < NUM_FOPS; j++) pcb->file_array[i].fop_jump_table[j] = (i < 2) ? std_table[i] : nofunc_table;
         pcb->file_array[i].inode = 0;
         pcb->file_array[i].file_position = 0;
         pcb->file_array[i].flags = (i < 2) ? 1 : 0;
@@ -96,10 +95,11 @@ int32_t execute(const uint8_t* command) {
     pcb->pid = pid;
     
 
-    int esp;
+    int esp, ebp;
     asm("movl %%esp, %0" : "=r"(esp) :);
-    pcb->parent_ksp = esp;
-
+    asm("movl %%ebp, %0" : "=r"(ebp) :);
+    pcb->parent_esp = esp;
+    pcb->parent_ebp = ebp;
     pcb->parent_pid = (first_process) ? 0 : ((pcb_t *)(esp & 0xFFFFE000))->pid;
 
     first_process = 0;
@@ -111,11 +111,11 @@ int32_t execute(const uint8_t* command) {
 
 /*
 * read
-*   DESCRIPTION: Sets up paging 
+*   DESCRIPTION:  
 *   INPUTS:         none
 *   OUTPUTS:        none
 *   RETURN VALUE:   none
-*   SIDE EFFECTS:   Initializes paging
+*   SIDE EFFECTS:   none
 *
 */
 int32_t read(int32_t fd, void* buf, int32_t nbytes) {
@@ -124,11 +124,11 @@ int32_t read(int32_t fd, void* buf, int32_t nbytes) {
 
 /*
 * write
-*   DESCRIPTION: Sets up paging 
+*   DESCRIPTION:  
 *   INPUTS:         none
 *   OUTPUTS:        none
 *   RETURN VALUE:   none
-*   SIDE EFFECTS:   Initializes paging
+*   SIDE EFFECTS:   none
 *
 */
 int32_t write(int32_t fd, const void* buf, int32_t nbytes) {
@@ -137,11 +137,11 @@ int32_t write(int32_t fd, const void* buf, int32_t nbytes) {
 
 /*
 * open
-*   DESCRIPTION: Sets up paging 
+*   DESCRIPTION:  
 *   INPUTS:         none
 *   OUTPUTS:        none
 *   RETURN VALUE:   none
-*   SIDE EFFECTS:   Initializes paging
+*   SIDE EFFECTS:   none
 *
 */
 int32_t open(const uint8_t* filename) {
@@ -150,11 +150,11 @@ int32_t open(const uint8_t* filename) {
 
 /*
 * close
-*   DESCRIPTION: Sets up paging 
+*   DESCRIPTION:  
 *   INPUTS:         none
 *   OUTPUTS:        none
 *   RETURN VALUE:   none
-*   SIDE EFFECTS:   Initializes paging
+*   SIDE EFFECTS:   none
 *
 */
 int32_t close(int32_t fd) {
@@ -163,11 +163,11 @@ int32_t close(int32_t fd) {
 
 /* TODO
 * getargs
-*   DESCRIPTION: Sets up paging 
+*   DESCRIPTION:  
 *   INPUTS:         none
 *   OUTPUTS:        none
 *   RETURN VALUE:   none
-*   SIDE EFFECTS:   Initializes paging
+*   SIDE EFFECTS:   none
 *
 */
 int32_t getargs(uint8_t* buf, int32_t nbytes) {
@@ -176,11 +176,11 @@ int32_t getargs(uint8_t* buf, int32_t nbytes) {
 
 /* TODO
 * vidmap
-*   DESCRIPTION: Sets up paging 
+*   DESCRIPTION:  
 *   INPUTS:         none
 *   OUTPUTS:        none
 *   RETURN VALUE:   none
-*   SIDE EFFECTS:   Initializes paging
+*   SIDE EFFECTS:   none
 *
 */
 int32_t vidmap(uint8_t** screen_start) {
@@ -189,11 +189,11 @@ int32_t vidmap(uint8_t** screen_start) {
 
 /* TODO
 * set_handler
-*   DESCRIPTION: Sets up paging 
+*   DESCRIPTION:  
 *   INPUTS:         none
 *   OUTPUTS:        none
 *   RETURN VALUE:   none
-*   SIDE EFFECTS:   Initializes paging
+*   SIDE EFFECTS:   none
 *
 */
 int32_t set_handler(int32_t signum, void* handler_address) {
@@ -202,11 +202,11 @@ int32_t set_handler(int32_t signum, void* handler_address) {
 
 /* TODO
 * sigreturn
-*   DESCRIPTION: Sets up paging 
+*   DESCRIPTION:  
 *   INPUTS:         none
 *   OUTPUTS:        none
 *   RETURN VALUE:   none
-*   SIDE EFFECTS:   Initializes paging
+*   SIDE EFFECTS:   none
 *
 */
 int32_t sigreturn(void) {
@@ -257,5 +257,5 @@ void return_to_user(int32_t process_id) {
 int get_next_pid(){
     int i;
     for(i = 0; process_array[i] && i < 8; i++){}
-    return i + 1;
+    return i;
 }

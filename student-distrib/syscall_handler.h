@@ -6,6 +6,7 @@
 #include "x86_desc.h"
 #include "types.h"
 #include "keyboard.h"
+#include "rtc.h"
 
 #define PCB_BITMASK 0xFFFFE000
 #define MAX_OPEN_PROCESSES 8
@@ -20,6 +21,7 @@
 #define ADDR_DIST_EIP   24
 #define USR_STACK_ADDR  0x8400000 - WORD_SIZE
 #define PCB_BITMASK     0xFFFFE000
+#define NUM_FILE_TYPES  3
 
 
 int32_t halt(uint8_t status);
