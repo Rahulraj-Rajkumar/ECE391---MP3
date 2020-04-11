@@ -116,7 +116,7 @@ void change_rate(uint32_t rate) {
 *   RETURN VALUE:   0 for success
 *   SIDE EFFECTS:   none    
 */
-uint32_t rtc_open(const uint8_t fileDesc) {
+int32_t rtc_open(const uint8_t* fileDesc) {
     // done
     change_rate(DEFAULT_FREQ);
     return 0;
@@ -130,7 +130,7 @@ uint32_t rtc_open(const uint8_t fileDesc) {
 *   RETURN VALUE:   0 for success
 *   SIDE EFFECTS:   none
 */
-uint32_t rtc_close(int32_t fileDesc) {
+int32_t rtc_close(int32_t fileDesc) {
     // done
     return 0;
 }
@@ -145,7 +145,7 @@ uint32_t rtc_close(int32_t fileDesc) {
 *   SIDE EFFECTS:   none
 *  
 */
-uint32_t rtc_read(int32_t * fd, uint8_t* buf, int32_t fileDesc) {
+int32_t rtc_read(int32_t * fd, uint8_t* buf, int32_t fileDesc) {
     /* volatile variable allows us to know when to read
    only executes read function when new interrupt has occurred */
 
@@ -164,7 +164,7 @@ uint32_t rtc_read(int32_t * fd, uint8_t* buf, int32_t fileDesc) {
 *                   -1 if failure (invalid inputs)
 *   SIDE EFFECTS:   none
 */
-uint32_t rtc_write(int32_t * fd, const uint8_t* buf, int32_t fileDesc) {
+int32_t rtc_write(int32_t * fd, const uint8_t* buf, int32_t fileDesc) {
     uint32_t rate;
 
     // make sure arguments are valid 

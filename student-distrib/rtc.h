@@ -31,9 +31,9 @@ void rtc_int();
 
 void change_rate(uint32_t rate);
 
-uint32_t rtc_open(const uint8_t fileDesc);
-uint32_t rtc_close(int32_t fileDesc);
-uint32_t rtc_read(int32_t * fd, uint8_t* buf, int32_t fileDesc);
-uint32_t rtc_write(int32_t * fd, const uint8_t* buf, int32_t fileDesc);
+int32_t rtc_open(const uint8_t* fileDesc);
+int32_t rtc_close(int32_t fileDesc);
+int32_t rtc_read(int32_t * fd, uint8_t* buf, int32_t fileDesc);
+int32_t rtc_write(int32_t * fd, const uint8_t* buf, int32_t fileDesc);
 
 #endif

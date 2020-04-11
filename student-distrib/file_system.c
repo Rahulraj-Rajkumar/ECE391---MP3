@@ -263,5 +263,6 @@ int32_t dir_read (int32_t * fd, uint8_t* buf, int32_t nbytes, uint32_t * offset)
  * Side Effects: copies program into memory
  */
 int32_t load_program(int32_t fd, uint8_t* addr){
-    file_read(&fd, addr, ((inode_t*)boot_block+fd+1)->length, 0);
+    if(file_read(&fd, addr, ((inode_t*)boot_block+fd+1)->length, 0) != ((inode_t*)boot_block+fd+1)->length) return -1;
+    return 0;
 }

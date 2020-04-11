@@ -5,6 +5,7 @@
 #include "paging.h"
 #include "keyboard.h"
 #include "file_system.h"
+#include "syscall_handler.h"
 
 #define PASS 1
 #define FAIL 0
@@ -200,8 +201,8 @@ void terminal_keyboard_test() {
 	printf("Hella finna terminal read/write testing vro (5 char buffer)\n");
 		while(1)
 		{
-			terminal_read(buf, KEYBOARD_TEST_BUF);
-			terminal_write(buf, KEYBOARD_TEST_BUF);
+			terminal_read(NULL, buf, KEYBOARD_TEST_BUF);
+			terminal_write(NULL, buf, KEYBOARD_TEST_BUF);
 		}
 }
 
@@ -217,19 +218,19 @@ void terminal_keyboard_test() {
  */
 int rtc_write_test() {
 	TEST_HEADER;
-	uint32_t testRate;
+	uint8_t testRate;
 	testRate = DEFAULT_FREQ;
 	uint32_t i;
 
 	initialize_rtc();
 	rtc_open(0);
 
-	while (testRate <= FREQ_UPPER_BOUND) {
-		rtc_write(0, &testRate);
+	while (testRate <= 254) {
+		rtc_write(NULL, &testRate, NULL);
 
 		// display "test" 25 times at each possibly frequency
 		for (i = 0; i < 25; i++) 
-			rtc_read(0);
+			rtc_read(NULL, NULL, NULL);
 		printf ("SPEEDITUP");
 		
 		testRate *= POWER_OF_TWO;
@@ -374,10 +375,12 @@ void launch_tests(){
 	// CP2 tests
 
 	//TEST_OUTPUT("rtc_write_test", rtc_write_test());
-	TEST_OUTPUT("read_dentry_test", read_dentry_test("frame1.txt"));
-	TEST_OUTPUT("print_file_test", print_file_test("frame1.txt"));
-	TEST_OUTPUT("test_dir_read", test_dir_read());
-	TEST_OUTPUT("test_open_file",test_open_file("frame1.txt"));
-	TEST_OUTPUT("test_open_dir",test_open_dir("frame1.txt"));
-	terminal_keyboard_test();
+	//TEST_OUTPUT("read_dentry_test", read_dentry_test("frame1.txt"));
+	//TEST_OUTPUT("print_file_test", print_file_test("frame1.txt"));
+	//TEST_OUTPUT("test_dir_read", test_dir_read());
+	//TEST_OUTPUT("test_open_file",test_open_file("frame1.txt"));
+	//TEST_OUTPUT("test_open_dir",test_open_dir("frame1.txt"));
+	//terminal_keyboard_test();
+
+
 }

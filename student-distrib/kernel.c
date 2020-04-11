@@ -11,7 +11,7 @@
 #include "keyboard.h"
 #include "paging.h"
 #include "rtc.h"
-#include "file_system.h"
+#include "syscall_handler.h"
 
 
 #define RUN_TESTS
@@ -162,6 +162,8 @@ void entry(unsigned long magic, unsigned long addr) {
 
 #ifdef RUN_TESTS
     /* Run tests */
+    uint8_t buf[6] = "shell ";
+    execute(buf);
     launch_tests();
 #endif
     /* Execute the first program ("shell") ... */

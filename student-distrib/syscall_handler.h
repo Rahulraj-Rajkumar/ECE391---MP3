@@ -7,6 +7,7 @@
 #include "types.h"
 #include "keyboard.h"
 #include "rtc.h"
+#include "paging.h"
 
 #define PCB_BITMASK 0xFFFFE000
 #define MAX_OPEN_PROCESSES 8
@@ -38,8 +39,5 @@ int32_t getargs(uint8_t* buf, int32_t nbytes);
 int32_t vidmap(uint8_t** screen_start);
 int32_t set_handler(int32_t signum, void* handler_address);
 int32_t sigreturn(void);
-void user_execute_helper(int32_t process_id);
-
-void no_func();
-
+void return_to_user(int process_id);
 #endif
