@@ -45,4 +45,6 @@ void init_paging();
 
 void change_process(int pid);
 
+void flush_tlb();
+
 #endif

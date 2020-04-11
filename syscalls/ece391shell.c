@@ -22,8 +22,11 @@ int main ()
 	buf[cnt] = '\0';
 	if (0 == ece391_strcmp (buf, (uint8_t*)"exit"))
 	    return 0;
-	if ('\0' == buf[0])
-	    continue;
+	if ('\0' == buf[0]){
+		ece391_fdputs (1, (uint8_t*)"this is a test\n");
+		continue;
+	}
+	    
 	rval = ece391_execute (buf);
 	if (-1 == rval)
 	    ece391_fdputs (1, (uint8_t*)"no such command\n");

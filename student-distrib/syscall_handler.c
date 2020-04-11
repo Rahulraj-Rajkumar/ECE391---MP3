@@ -36,10 +36,7 @@ int32_t (*std_table[2][NUM_FOPS])() = {
 {no_func, terminal_write, terminal_open, terminal_close}
 };
 int32_t (*file_table[NUM_FILE_TYPES][NUM_FOPS])() = {
-{rtc_read, 
-rtc_write, 
-rtc_open, 
-rtc_close},
+{rtc_read, rtc_write, rtc_open, rtc_close},
 {file_read, file_write, file_open, file_close},
 {dir_read, dir_write, dir_open, dir_close}
 };
@@ -67,18 +64,18 @@ int32_t halt(uint8_t status) {
     }   
 
     process_array[curr_pid] = 0;
-/*
+
     asm volatile("              \n\
         movl    %0, %%esp       \n\
         movl    %1, %%ebp       \n\
-        movb    %2, %%eax       \n\
+        movb    %2, %%al        \n\
         jmp     HALT_RET_LABEL  \n\
         "
         :
         : "r" (curr_pcb->parent_esp), "r" (curr_pcb->parent_ebp), "r" (status)
         : "cc"
     );
-*/
+    
     asm volatile(
 		"HALT_RET_LABEL: \n\
 		leave \n\
@@ -117,7 +114,7 @@ int32_t execute(const uint8_t* command) {
     for(i = 0; i < 32 && command[i] != ' '; i++) fname[i] = command[i];
 
     if(file_open(fname, &fd)) return FAILURE;
-    if(file_read(&fd, buf, 4, &offset)) return FAILURE;
+    if(!file_read(&fd, buf, 4, &offset)) return FAILURE;
     if(strncmp((const int8_t*)buf, "ELF", 4)) return FAILURE;
 
 
@@ -130,7 +127,7 @@ int32_t execute(const uint8_t* command) {
 
     process_array[pid] = 1;
 
-    pcb_t* pcb = (pcb_t*)(K_MEM_END - KSTACK_SIZE * pid);
+    pcb_t* pcb = (pcb_t*)(K_MEM_END - KSTACK_SIZE * (pid+1));
 
     for(i = 0; i < MAX_OPEN_PROCESSES; i++){
         for(j = 0; j < NUM_FOPS; j++) pcb->file_array[i].fop_jump_table[j] = (i < 2) ? std_table[i][j] : nofunc_table[j];
@@ -139,16 +136,16 @@ int32_t execute(const uint8_t* command) {
         pcb->file_array[i].flags = (i < 2) ? 1 : 0;
     }
     pcb->pid = pid;
-    
 
     int esp, ebp;
-    //asm("movl %%esp, %0" : "=r"(esp) :);
-    //asm("movl %%ebp, %0" : "=r"(ebp) :);
+    asm("movl %%esp, %0" : "=r"(esp) :);
+    asm("movl %%ebp, %0" : "=r"(ebp) :);
     pcb->parent_esp = esp;
     pcb->parent_ebp = ebp;
     pcb->parent_pid = (first_process) ? 0 : ((pcb_t *)(esp & 0xFFFFE000))->pid;
 
     first_process = 0;
+;
     
     return_to_user(pid);
 
@@ -166,12 +163,12 @@ int32_t execute(const uint8_t* command) {
 */
 int32_t read(int32_t fd, void* buf, int32_t nbytes) {
     int esp;
-    //asm("movl %%esp, %0" : "=r"(esp) :);
+    asm("movl %%esp, %0" : "=r"(esp) :);
     pcb_t* pcb = (pcb_t *)(esp & 0xFFFFE000);
 
     if(fd < 0 || fd >= MAX_OPEN_PROCESSES || !buf) return FAILURE;
 
-    pcb->file_array[fd].fop_jump_table[READ_INDEX](fd, buf, nbytes);
+    pcb->file_array[fd].fop_jump_table[READ_INDEX](pcb->file_array[fd].inode, buf, nbytes);
 
     return 0;
 }
@@ -187,12 +184,12 @@ int32_t read(int32_t fd, void* buf, int32_t nbytes) {
 */
 int32_t write(int32_t fd, const void* buf, int32_t nbytes) {
     int esp;
-    //asm("movl %%esp, %0" : "=r"(esp) :);
+    asm("movl %%esp, %0" : "=r"(esp) :);
     pcb_t* pcb = (pcb_t *)(esp & 0xFFFFE000);
 
     if(fd < 0 || fd >= MAX_OPEN_PROCESSES || !buf) return FAILURE;
 
-    pcb->file_array[fd].fop_jump_table[WRITE_INDEX](fd, buf, nbytes);
+    pcb->file_array[fd].fop_jump_table[WRITE_INDEX](pcb->file_array[fd].inode, buf, nbytes);
 
     return 0;
 }
@@ -209,7 +206,7 @@ int32_t write(int32_t fd, const void* buf, int32_t nbytes) {
 int32_t open(const uint8_t* filename) {
     dentry_t dentry;
     int i, j, esp;
-    //asm("movl %%esp, %0" : "=r"(esp) :);
+    asm("movl %%esp, %0" : "=r"(esp) :);
     pcb_t* pcb = (pcb_t *)(esp & 0xFFFFE000);
 
     if(!filename) return FAILURE;
@@ -225,6 +222,8 @@ int32_t open(const uint8_t* filename) {
     pcb->file_array[i].file_position = 0;
     pcb->file_array[i].flags = 1;
 
+    if(pcb->file_array[i].fop_jump_table[OPEN_INDEX](filename))
+
     return i;
 }
 
@@ -239,12 +238,12 @@ int32_t open(const uint8_t* filename) {
 */
 int32_t close(int32_t fd) {
     int esp;
-    //asm("movl %%esp, %0" : "=r"(esp) :);
+    asm("movl %%esp, %0" : "=r"(esp) :);
     pcb_t* pcb = (pcb_t *)(esp & 0xFFFFE000);
 
     if(fd < 0 || fd >= MAX_OPEN_PROCESSES) return FAILURE;
 
-    pcb->file_array[fd].fop_jump_table[CLOSE_INDEX](fd);
+    pcb->file_array[fd].fop_jump_table[CLOSE_INDEX](pcb->file_array[fd].inode);
 
     return 0;
 }

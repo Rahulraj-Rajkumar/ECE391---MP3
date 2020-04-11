@@ -64,6 +64,8 @@ int32_t terminal_read(int32_t fd, uint8_t* buf, int32_t nbytes)
     read_lock = 1;
     is_enter = 0;
 
+    sti();
+
     // wait for enter input
     while(!is_enter);
 

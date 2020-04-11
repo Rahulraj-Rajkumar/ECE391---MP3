@@ -47,5 +47,18 @@ void init_paging(){
 }
 
 void change_process(int pid){
-	page_directory[USER_PROCESS_INDEX] = PROCESS_LOC(pid) | PDE_PS | PDE_US | PDE_RW | PDE_P;
+	//uint32_t test = (PROCESS_LOC(pid)) | PDE_PS | PDE_US | PDE_RW | PDE_P;
+	page_directory[USER_PROCESS_INDEX] = (PROCESS_LOC(pid)) | PDE_PS | PDE_US | PDE_RW | PDE_P;
+	flush_tlb();
+}
+
+void flush_tlb(){
+	asm volatile("						\n\
+		movl	%%cr3,%%eax				\n\
+		movl	%%eax,%%cr3				\n\
+		"
+		:
+		:
+		: "eax"
+	);
 }

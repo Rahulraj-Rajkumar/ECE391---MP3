@@ -57,4 +57,4 @@ syscall_error:
     iret
 
 sys_int_table:
-	.long halt, execute, read, write, open, close, getargs, vidmap, set_handler, sigreturn
+	.long 0x0, halt, execute, read, write, open, close, getargs, vidmap, set_handler, sigreturn
