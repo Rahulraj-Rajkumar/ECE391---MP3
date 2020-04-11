@@ -66,22 +66,22 @@ int32_t execute(const uint8_t* command) {
     dentry_t dentry;
     int32_t fd;
     int i, j, pid;
-
+    int offset = 0;
     if((pid = get_next_pid()) > 8) return FAILURE;
 
     for(i = 0; i < 32 && command[i] != ' '; i++) fname[i] = command[i];
 
     if(file_open(fname, &fd)) return FAILURE;
-    if(file_read(fd, buf, 4, 0)) return FAILURE;
+    if(file_read(&fd, buf, 4, &offset)) return FAILURE;
     if(strncmp(buf, "ELF", 4)) return FAILURE;
 
 
 
     new_process(pid);
 
+    if(load_program(fd, (uint8_t *)USR_START_ADDR)) return FAILURE;
+        
     curr_pid = pid;
-
-    // Vishnu to implement loader here
 
     pcb_t* pcb = KERNEL_MEM_END - KSTACK_SIZE * pid;
 
@@ -104,6 +104,8 @@ int32_t execute(const uint8_t* command) {
 
     first_process = 0;
     
+    return_to_user(pid);
+
     return 0;
 }
 

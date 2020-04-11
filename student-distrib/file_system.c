@@ -204,7 +204,7 @@ int32_t file_read (int32_t* fd, uint8_t* buf, int32_t nbytes, uint32_t * offset)
 /* dir_open
  *
  * Inputs: const uint8_t* filename (file name), int32_t * fd (file descriptor)
- * Outputs: 0 if work, -1 if nto work
+ * Outputs: 0 if work, -1 if not work
  * Side Effects: writes to fd
  */
 int32_t dir_open (const uint8_t* filename, int32_t * fd){
@@ -254,4 +254,14 @@ int32_t dir_read (int32_t * fd, uint8_t* buf, int32_t nbytes, uint32_t * offset)
     // if there is more stuff to read, go to next one
     *offset += (nbytes > 0);
     return nbytes;
+}
+
+/* load_program
+ *
+ * Inputs: fd: inode_num of program to load, addr: address to load into
+ * Outputs: 0 if work, -1 if not work
+ * Side Effects: copies program into memory
+ */
+int32_t load_program(int32_t fd, uint8_t* addr){
+    file_read(&fd, addr, ((inode_t*)boot_block+fd+1)->length, 0);
 }

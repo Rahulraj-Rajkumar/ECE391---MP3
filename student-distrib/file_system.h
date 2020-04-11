@@ -50,5 +50,6 @@ int32_t dir_close (int32_t* fd);
 int32_t dir_write (int32_t* fd, const void* buf, int32_t nbytes);
 int32_t dir_read (int32_t* fd, uint8_t* buf, int32_t nbytes, uint32_t * offset);
 
+int32_t load_program(int32_t fd, uint8_t* addr);
 
 #endif
