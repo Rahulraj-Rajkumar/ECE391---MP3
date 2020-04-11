@@ -24,7 +24,7 @@ static uint8_t line_marker = 0;
 *   SIDE EFFECTS:   none
 *
 */
-int32_t terminal_open(){
+int32_t terminal_open(const uint8_t* filename){
   return 0;
 }
 
@@ -37,7 +37,7 @@ int32_t terminal_open(){
 *   SIDE EFFECTS:   none
 *
 */
-int32_t terminal_close(){
+int32_t terminal_close(int32_t fd){
   return 0;
 }
 
@@ -51,7 +51,7 @@ int32_t terminal_close(){
 *   SIDE EFFECTS:   Writes to inputted buf, changes keyboard buf
 *
 */
-int32_t terminal_read(uint8_t* buf, int32_t nbytes)
+int32_t terminal_read(int32_t fd, uint8_t* buf, int32_t nbytes)
 {
     // if inputted buffer is null return 1
     int writeBytes;
@@ -139,7 +139,7 @@ int32_t terminal_read(uint8_t* buf, int32_t nbytes)
 *   SIDE EFFECTS:   Writes to screen 
 *
 */
-int32_t terminal_write(const uint8_t* buf, int32_t nbytes)
+int32_t terminal_write(int32_t fd, const uint8_t* buf, int32_t nbytes)
 {
     // if inputted buffer is null, return
     if(buf == NULL)
