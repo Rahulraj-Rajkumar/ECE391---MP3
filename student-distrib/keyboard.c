@@ -127,7 +127,8 @@ int32_t terminal_read(int32_t fd, uint8_t* buf, int32_t nbytes)
     sti();
     read_lock = 0;
     is_enter = 0;
-    return 0;
+    int retval = (nbytes < KBRD_BUF_LENGTH) ? nbytes : KBRD_BUF_LENGTH;
+    return retval;
 }
 
 
@@ -161,7 +162,7 @@ int32_t terminal_write(int32_t fd, const uint8_t* buf, int32_t nbytes)
   
     // retrieve flags and return
     sti();
-    return 0;
+    return nbytes;
 }
 
 

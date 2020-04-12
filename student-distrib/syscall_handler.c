@@ -37,8 +37,8 @@ int32_t (*std_table[2][NUM_FOPS])() = {
 };
 int32_t (*file_table[NUM_FILE_TYPES][NUM_FOPS])() = {
 {rtc_read, rtc_write, rtc_open, rtc_close},
-{file_read, file_write, file_open, file_close},
-{dir_read, dir_write, dir_open, dir_close}
+{dir_read, dir_write, dir_open, dir_close},
+{file_read, file_write, file_open, file_close}
 };
 /*
 * halt
@@ -65,23 +65,14 @@ int32_t halt(uint8_t status) {
 
     process_array[curr_pid] = 0;
 
-    asm volatile("              \n\
-        movl    %0, %%esp       \n\
-        movl    %1, %%ebp       \n\
-        movb    %2, %%al        \n\
-        jmp     HALT_RET_LABEL  \n\
-        "
-        :
-        : "r" (curr_pcb->parent_esp), "r" (curr_pcb->parent_ebp), "r" (status)
-        : "cc"
-    );
-    
-    asm volatile(
-		"HALT_RET_LABEL: \n\
-		leave \n\
-		ret \n\
-		"
-	);
+	asm volatile("movl %0, %%esp	;"
+				 "pushl %1			;"::"g"(curr_pcb->parent_esp),"g"(status)); // Asm stuff put the "parent_ksp" into the %ESP
+	asm volatile("movl %0, %%ebp"::"g"(curr_pcb->parent_ebp)); // Asm stuff put the "parent_kbp" into the %EBP
+	
+	asm volatile("popl %eax");
+	asm volatile("movl %ebp, %esp");
+    asm volatile("popl %ebp");
+	asm volatile("ret");
     return 0;    
 }
 
@@ -103,7 +94,7 @@ int get_next_pid(){
 int32_t execute(const uint8_t* command) {
     uint8_t fname[NAME_SIZE];
     uint8_t buf[4];
-    int32_t fd;
+    dentry_t dentry;
     int i, j, pid;
     uint32_t offset = 0;
 
@@ -113,15 +104,15 @@ int32_t execute(const uint8_t* command) {
 
     for(i = 0; i < 32 && command[i] != ' '; i++) fname[i] = command[i];
 
-    if(file_open(fname, &fd)) return FAILURE;
-    if(!file_read(&fd, buf, 4, &offset)) return FAILURE;
+    if(read_dentry_by_name((int8_t*)fname, &dentry)) return FAILURE;
+    if(!file_read(dentry.inode_num, buf, 4, offset)) return FAILURE;
     if(strncmp((const int8_t*)buf, "ELF", 4)) return FAILURE;
 
 
 
     change_process(pid);
 
-    if(load_program(fd, (uint8_t *)USR_START_ADDR)) return FAILURE;
+    if(load_program(dentry.inode_num, (uint8_t *)USR_START_ADDR)) return FAILURE;
         
     curr_pid = pid;
 
@@ -162,15 +153,15 @@ int32_t execute(const uint8_t* command) {
 *
 */
 int32_t read(int32_t fd, void* buf, int32_t nbytes) {
-    int esp;
+    int esp, retval;
     asm("movl %%esp, %0" : "=r"(esp) :);
     pcb_t* pcb = (pcb_t *)(esp & 0xFFFFE000);
 
     if(fd < 0 || fd >= MAX_OPEN_PROCESSES || !buf) return FAILURE;
 
-    pcb->file_array[fd].fop_jump_table[READ_INDEX](pcb->file_array[fd].inode, buf, nbytes);
+    retval = pcb->file_array[fd].fop_jump_table[READ_INDEX](pcb->file_array[fd].inode, buf, nbytes);
 
-    return 0;
+    return retval;
 }
 
 /*
@@ -183,15 +174,15 @@ int32_t read(int32_t fd, void* buf, int32_t nbytes) {
 *
 */
 int32_t write(int32_t fd, const void* buf, int32_t nbytes) {
-    int esp;
+    int esp, retval;
     asm("movl %%esp, %0" : "=r"(esp) :);
     pcb_t* pcb = (pcb_t *)(esp & 0xFFFFE000);
 
     if(fd < 0 || fd >= MAX_OPEN_PROCESSES || !buf) return FAILURE;
 
-    pcb->file_array[fd].fop_jump_table[WRITE_INDEX](pcb->file_array[fd].inode, buf, nbytes);
+    retval = pcb->file_array[fd].fop_jump_table[WRITE_INDEX](pcb->file_array[fd].inode, buf, nbytes);
 
-    return 0;
+    return retval;
 }
 
 /*
@@ -222,7 +213,7 @@ int32_t open(const uint8_t* filename) {
     pcb->file_array[i].file_position = 0;
     pcb->file_array[i].flags = 1;
 
-    if(pcb->file_array[i].fop_jump_table[OPEN_INDEX](filename))
+    if(pcb->file_array[i].fop_jump_table[OPEN_INDEX](filename)) return FAILURE;
 
     return i;
 }
@@ -237,15 +228,15 @@ int32_t open(const uint8_t* filename) {
 *
 */
 int32_t close(int32_t fd) {
-    int esp;
+    int esp, retval;
     asm("movl %%esp, %0" : "=r"(esp) :);
     pcb_t* pcb = (pcb_t *)(esp & 0xFFFFE000);
 
     if(fd < 0 || fd >= MAX_OPEN_PROCESSES) return FAILURE;
 
-    pcb->file_array[fd].fop_jump_table[CLOSE_INDEX](pcb->file_array[fd].inode);
+    retval = pcb->file_array[fd].fop_jump_table[CLOSE_INDEX](pcb->file_array[fd].inode);
 
-    return 0;
+    return retval;
 }
 
 /* TODO

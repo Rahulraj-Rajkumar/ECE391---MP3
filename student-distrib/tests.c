@@ -306,7 +306,7 @@ int test_dir_read(){
 	int num_bytes;
 
 	// As long as dir_read is not returning 0 (it has not reached the end of the file), read in the next directory
-	while((num_bytes = dir_read (&fd , buf, 32, &offset))){
+	while((num_bytes = dir_read (fd , buf, 32, offset))){
 		// Print the name of the directory to screen
 		for(i = 0; i<num_bytes; i++){
 			putc(buf[i]);
@@ -327,10 +327,12 @@ int test_dir_read(){
 int test_open_file(const int8_t* fname){
 	TEST_HEADER;
 	int32_t fd;
+	dentry_t dentry;
 	// Open and then close the given file
-	file_open((uint8_t*)fname,&fd);
+	read_dentry_by_name(fname, &dentry);
+	fd = dentry.inode_num;
 	printf("%d",fd);
-	file_close(&fd);
+	file_close(fd);
 
 	// If close was successful, fd should be 0, if it isnt return FAIL
 	if(fd==0){
@@ -349,8 +351,8 @@ int test_open_file(const int8_t* fname){
  */
 int test_open_dir(const int8_t* fname){
 	TEST_HEADER;
-	int32_t fd;
-	if ( 0 == dir_open((uint8_t*)fname,&fd)) return PASS;
+	dentry_t dentry;
+	if ( 0 == read_dentry_by_name(fname, &dentry)) return PASS;
 	else return FAIL;
 }
 /* Checkpoint 3 tests */
