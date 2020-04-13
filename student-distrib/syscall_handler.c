@@ -3,7 +3,6 @@
 
 // File Descriptor struct. If you need more info, RTDC 8.2
 typedef struct fd_t {
-    // I got no clue about these types so if another type is more convenient go for it
     int32_t (*fop_jump_table[NUM_FOPS])();
     int32_t inode;
     int32_t file_position;
@@ -17,9 +16,6 @@ typedef struct pcb_t {
     uint32_t parent_esp;
     uint32_t parent_ebp;
     int8_t parent_pid;
-    // There should be a bunch more shit stored in this struct but the documentation says "signal information"
-    // and idk what that means.  Probably u wanna store like the parent pcb pointer and also like if it is parent
-    // or child process and other shit idk.
 } pcb_t;
 
 int process_array[MAX_OPEN_PROCESSES];
@@ -50,28 +46,33 @@ int32_t (*file_table[NUM_FILE_TYPES][NUM_FOPS])() = {
 *
 */
 int32_t halt(uint8_t status) {
-    pcb_t * curr_pcb = (pcb_t *)(K_MEM_END - curr_pid * K_STACK_SIZE);
+    pcb_t * curr_pcb = (pcb_t *)(K_MEM_END - (curr_pid + 1) * K_STACK_SIZE);
 
+    //nuint32_t eip = ((pcb_t*)(curr_pcb->parent_esp & PCB_BITMASK))->ret_addr;
 
-    if((curr_pcb->parent_esp & PCB_BITMASK) == NULL)
+    //uint32_t* eip_ptr = (uint32_t*)(curr_pcb->parent_ebp);
+
+    //*eip_ptr = eip;
+
+    if(curr_pcb->parent_pid < 0)
     {
-        tss.esp0 = K_MEM_END;
+        printf("Sorry you can't halt the shell");
+        return status;
     }
     else
     {
-        change_process(curr_pid);
+        change_process(curr_pcb->parent_pid);
         tss.esp0 = K_MEM_END - K_STACK_SIZE * curr_pcb->parent_pid - WORD_SIZE;
     }   
 
     process_array[curr_pid] = 0;
 
-	asm volatile("movl %0, %%esp	;"
-				 "pushl %1			;"::"g"(curr_pcb->parent_esp),"g"(status)); // Asm stuff put the "parent_ksp" into the %ESP
+	asm volatile("movl %0, %%esp"::"g"(curr_pcb->parent_esp)); // Asm stuff put the "parent_ksp" into the %ESP
 	asm volatile("movl %0, %%ebp"::"g"(curr_pcb->parent_ebp)); // Asm stuff put the "parent_kbp" into the %EBP
 	
-	asm volatile("popl %eax");
-	asm volatile("movl %ebp, %esp");
-    asm volatile("popl %ebp");
+	asm volatile("movl %0, %%eax"::"g"(status)); // Asm stuff put the "status" into the %EAX
+    
+    asm volatile("leave");
 	asm volatile("ret");
     return 0;    
 }
@@ -133,10 +134,11 @@ int32_t execute(const uint8_t* command) {
     asm("movl %%ebp, %0" : "=r"(ebp) :);
     pcb->parent_esp = esp;
     pcb->parent_ebp = ebp;
-    pcb->parent_pid = (first_process) ? 0 : ((pcb_t *)(esp & 0xFFFFE000))->pid;
+    //pcb->ret_addr = *(uint32_t*)(ebp);
+    pcb->parent_pid = (first_process) ? -1 : ((pcb_t *)(esp & 0xFFFFE000))->pid;
 
     first_process = 0;
-;
+
     
     return_to_user(pid);
 
@@ -158,6 +160,8 @@ int32_t read(int32_t fd, void* buf, int32_t nbytes) {
     pcb_t* pcb = (pcb_t *)(esp & 0xFFFFE000);
 
     if(fd < 0 || fd >= MAX_OPEN_PROCESSES || !buf) return FAILURE;
+
+    sti();
 
     retval = pcb->file_array[fd].fop_jump_table[READ_INDEX](pcb->file_array[fd].inode, buf, nbytes);
 
