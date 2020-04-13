@@ -22,6 +22,8 @@ kbrd_int_w:
     popal
     iret
 
+
+# syscall wrapper that pushes all regs except eax because eax is required for usage
 sys_int_w:
     cmpl    $10, %eax
     ja      syscall_error
@@ -56,5 +58,6 @@ syscall_error:
     movl    $-1, %eax
     iret
 
+# jump table to jump to different syscall handlers
 sys_int_table:
 	.long 0x0, halt, execute, read, write, open, close, getargs, vidmap, set_handler, sigreturn
