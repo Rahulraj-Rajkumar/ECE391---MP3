@@ -26,6 +26,7 @@ int first_process = 1;
 
 int32_t no_func(){return 0;}
 
+/* Initializes tables for stdin, stdout, RTC and files */ 
 int32_t (*nofunc_table[NUM_FOPS])() = {no_func, no_func, no_func, no_func}; 
 int32_t (*std_table[2][NUM_FOPS])() = {
 {terminal_read, no_func, terminal_open, terminal_close}, 
@@ -105,13 +106,17 @@ int32_t execute(const uint8_t* command) {
     int i, j, pid;
     uint32_t offset = 0;
 
-    //check for bounds
+    // Null check command
     if(!command) return FAILURE;
 
+    // if no available next process ID, return -1
     if((pid = get_next_pid()) > MAX_OPEN_PROCESSES) return FAILURE;
 
+
+    // get valid command
     for(i = 0; i < 32 && command[i] != ' '; i++) fname[i] = command[i];
 
+    // if file is valid, continue
     if(read_dentry_by_name((int8_t*)fname, &dentry)) return FAILURE;
     if(!file_read(dentry.inode_num, buf, 4, offset)) return FAILURE;
     if(strncmp((const int8_t*)buf, "ELF", 4)) return FAILURE;
@@ -124,7 +129,7 @@ int32_t execute(const uint8_t* command) {
 
     process_array[pid] = 1;
 
-    //
+    /* for every open process, set PCB */
     pcb_t* pcb = (pcb_t*)(K_MEM_END - KSTACK_SIZE * (pid+1));
 
     for(i = 0; i < MAX_OPEN_PROCESSES; i++){
@@ -135,6 +140,7 @@ int32_t execute(const uint8_t* command) {
     }
     pcb->pid = pid;
 
+    /* close out of function safely by handling registers */
     int esp, ebp;
     asm("movl %%esp, %0" : "=r"(esp) :);
     asm("movl %%ebp, %0" : "=r"(ebp) :);
@@ -190,7 +196,7 @@ int32_t write(int32_t fd, const void* buf, int32_t nbytes) {
     asm("movl %%esp, %0" : "=r"(esp) :);
     pcb_t* pcb = (pcb_t *)(esp & 0xFFFFE000);
     
-    //check bounds
+    // check bounds
     if(fd < 0 || fd >= MAX_OPEN_PROCESSES || !buf) return FAILURE;
 
     retval = pcb->file_array[fd].fop_jump_table[WRITE_INDEX](pcb->file_array[fd].inode, buf, nbytes);

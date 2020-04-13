@@ -2,7 +2,8 @@ boot.o: boot.S multiboot.h x86_desc.h types.h
 ex_wrapper.o: ex_wrapper.S ex_wrapper.h
 int_wrapper.o: int_wrapper.S int_wrapper.h
 x86_desc.o: x86_desc.S x86_desc.h types.h
-ex_handler.o: ex_handler.c ex_handler.h lib.h types.h ex_wrapper.h
+ex_handler.o: ex_handler.c ex_handler.h lib.h types.h ex_wrapper.h \
+  x86_desc.h
 file_system.o: file_system.c file_system.h types.h lib.h
 i8259.o: i8259.c i8259.h types.h lib.h
 idt.o: idt.c idt.h x86_desc.h types.h ex_wrapper.h int_wrapper.h \

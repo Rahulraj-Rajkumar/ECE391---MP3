@@ -48,19 +48,29 @@ void init_paging(){
 
 /*
 * change_process
-*   DESCRIPTION:  dick
+*   DESCRIPTION:  Sets up new page for new current process (user program or something) and flushes out TLB
 *   INPUTS:         int pid
 *   OUTPUTS:        none
 *   RETURN VALUE:   none
-*   SIDE EFFECTS:   Initializes paging
+*   SIDE EFFECTS:   flushes tlb, sets up memory for new process
 *
 */
 void change_process(int pid){
-	//
+	// changes process and cleans out TLB
 	page_directory[USER_PROCESS_INDEX] = (PROCESS_LOC(pid)) | PDE_PS | PDE_US | PDE_RW | PDE_P;
 	flush_tlb();
 }
 
+
+/*
+* flush_tlb()
+*   DESCRIPTION:  Cleans out TLB for fresh memory accesses
+*   INPUTS:         none
+*   OUTPUTS:        none
+*   RETURN VALUE:   none
+*   SIDE EFFECTS:   resets tlb
+*
+*/
 void flush_tlb(){
 	asm volatile("						\n\
 		movl	%%cr3,%%eax				\n\
