@@ -38,22 +38,17 @@ int32_t (*file_table[NUM_FILE_TYPES][NUM_FOPS])() = {
 };
 /*
 * halt
-*   DESCRIPTION:  
-*   INPUTS:         none
+*   DESCRIPTION:    expand arg from parent program when terminating process
+*   INPUTS:         uint8_t status - 8 bit argument from BL
 *   OUTPUTS:        none
 *   RETURN VALUE:   none
-*   SIDE EFFECTS:   none
+*   SIDE EFFECTS:   expand status to return value of parent program's execute sys call
 *
 */
 int32_t halt(uint8_t status) {
     pcb_t * curr_pcb = (pcb_t *)(K_MEM_END - (curr_pid + 1) * K_STACK_SIZE);
 
-    //nuint32_t eip = ((pcb_t*)(curr_pcb->parent_esp & PCB_BITMASK))->ret_addr;
-
-    //uint32_t* eip_ptr = (uint32_t*)(curr_pcb->parent_ebp);
-
-    //*eip_ptr = eip;
-
+    //check for bounds of parent process, if good, go to helper function to change process
     if(curr_pcb->parent_pid < 0)
     {
         printf("Sorry you can't halt the shell");
@@ -77,28 +72,40 @@ int32_t halt(uint8_t status) {
     return 0;    
 }
 
+/*
+* get_next_pid
+*   DESCRIPTION:    gets new process in process array
+*   INPUTS:         none
+*   OUTPUTS:        none
+*   RETURN VALUE:   next process in array
+*   SIDE EFFECTS:   none
+*
+*/
 int get_next_pid(){
     int i;
+    //returns the next in array
     for(i = 0; process_array[i] && i < 8; i++){}
     return i;
 }
 
 /*
 * execute
-*   DESCRIPTION:  
-*   INPUTS:         none
+*   DESCRIPTION:    load and executues a new program  
+*   INPUTS:         uint8_t command
 *   OUTPUTS:        none
-*   RETURN VALUE:   none
+*   RETURN VALUE:   -1 is fail, 0 is ok
 *   SIDE EFFECTS:   none
 *
 */
 int32_t execute(const uint8_t* command) {
+    //initialize variables
     uint8_t fname[NAME_SIZE];
     uint8_t buf[4];
     dentry_t dentry;
     int i, j, pid;
     uint32_t offset = 0;
 
+    //check for bounds
     if(!command) return FAILURE;
 
     if((pid = get_next_pid()) > MAX_OPEN_PROCESSES) return FAILURE;
@@ -109,8 +116,6 @@ int32_t execute(const uint8_t* command) {
     if(!file_read(dentry.inode_num, buf, 4, offset)) return FAILURE;
     if(strncmp((const int8_t*)buf, "ELF", 4)) return FAILURE;
 
-
-
     change_process(pid);
 
     if(load_program(dentry.inode_num, (uint8_t *)USR_START_ADDR)) return FAILURE;
@@ -119,6 +124,7 @@ int32_t execute(const uint8_t* command) {
 
     process_array[pid] = 1;
 
+    //
     pcb_t* pcb = (pcb_t*)(K_MEM_END - KSTACK_SIZE * (pid+1));
 
     for(i = 0; i < MAX_OPEN_PROCESSES; i++){
@@ -147,10 +153,10 @@ int32_t execute(const uint8_t* command) {
 
 /*
 * read
-*   DESCRIPTION:  
-*   INPUTS:         none
+*   DESCRIPTION:    reads data
+*   INPUTS:         int32_t fd - file directory, void* buf - buffer to write to, int32_t nbytes - bytes successful
 *   OUTPUTS:        none
-*   RETURN VALUE:   none
+*   RETURN VALUE:   nbytes
 *   SIDE EFFECTS:   none
 *
 */
@@ -159,10 +165,12 @@ int32_t read(int32_t fd, void* buf, int32_t nbytes) {
     asm("movl %%esp, %0" : "=r"(esp) :);
     pcb_t* pcb = (pcb_t *)(esp & 0xFFFFE000);
 
+    //if out of bounds fail
     if(fd < 0 || fd >= MAX_OPEN_PROCESSES || !buf) return FAILURE;
 
     sti();
 
+    //read file from array and file directory, return nbytes read
     retval = pcb->file_array[fd].fop_jump_table[READ_INDEX](pcb->file_array[fd].inode, buf, nbytes);
 
     return retval;
@@ -170,18 +178,19 @@ int32_t read(int32_t fd, void* buf, int32_t nbytes) {
 
 /*
 * write
-*   DESCRIPTION:  
-*   INPUTS:         none
+*   DESCRIPTION:    writes data
+*   INPUTS:         nt32_t fd - file directory, void* buf - buffer to write to, int32_t nbytes - bytes successful
 *   OUTPUTS:        none
-*   RETURN VALUE:   none
-*   SIDE EFFECTS:   none
+*   RETURN VALUE:   nbytes
+*   SIDE EFFECTS:   writes
 *
 */
 int32_t write(int32_t fd, const void* buf, int32_t nbytes) {
     int esp, retval;
     asm("movl %%esp, %0" : "=r"(esp) :);
     pcb_t* pcb = (pcb_t *)(esp & 0xFFFFE000);
-
+    
+    //check bounds
     if(fd < 0 || fd >= MAX_OPEN_PROCESSES || !buf) return FAILURE;
 
     retval = pcb->file_array[fd].fop_jump_table[WRITE_INDEX](pcb->file_array[fd].inode, buf, nbytes);
@@ -191,11 +200,11 @@ int32_t write(int32_t fd, const void* buf, int32_t nbytes) {
 
 /*
 * open
-*   DESCRIPTION:  
-*   INPUTS:         none
-*   OUTPUTS:        none
-*   RETURN VALUE:   none
-*   SIDE EFFECTS:   none
+*   DESCRIPTION:    provides access to the file system
+*   INPUTS:         uint8_t filename - fname
+*   OUTPUTS:        dentry found
+*   RETURN VALUE:   index
+*   SIDE EFFECTS:   set up data
 *
 */
 int32_t open(const uint8_t* filename) {
@@ -204,6 +213,7 @@ int32_t open(const uint8_t* filename) {
     asm("movl %%esp, %0" : "=r"(esp) :);
     pcb_t* pcb = (pcb_t *)(esp & 0xFFFFE000);
 
+    //checks bounds
     if(!filename) return FAILURE;
 
     read_dentry_by_name((const int8_t*)filename, &dentry);
@@ -212,6 +222,7 @@ int32_t open(const uint8_t* filename) {
 
     if(i == 8) return FAILURE;
 
+    //finds dentry based on name, allocated unused fd and set up data to handle file type
     for(j = 0; j < NUM_FOPS; j++) pcb->file_array[i].fop_jump_table[j] = file_table[dentry.file_type][j];
     pcb->file_array[i].inode = dentry.inode_num;
     pcb->file_array[i].file_position = 0;
@@ -224,11 +235,11 @@ int32_t open(const uint8_t* filename) {
 
 /*
 * close
-*   DESCRIPTION:  
-*   INPUTS:         none
+*   DESCRIPTION:    closes fd
+*   INPUTS:         int32_t fd - file descriptor
 *   OUTPUTS:        none
-*   RETURN VALUE:   none
-*   SIDE EFFECTS:   none
+*   RETURN VALUE:   -1 for fail, 0 for good
+*   SIDE EFFECTS:   closes fd
 *
 */
 int32_t close(int32_t fd) {
@@ -236,6 +247,7 @@ int32_t close(int32_t fd) {
     asm("movl %%esp, %0" : "=r"(esp) :);
     pcb_t* pcb = (pcb_t *)(esp & 0xFFFFE000);
 
+    //check bounds
     if(fd < 0 || fd >= MAX_OPEN_PROCESSES) return FAILURE;
 
     retval = pcb->file_array[fd].fop_jump_table[CLOSE_INDEX](pcb->file_array[fd].inode);
@@ -258,11 +270,11 @@ int32_t getargs(uint8_t* buf, int32_t nbytes) {
 
 /* TODO
 * vidmap
-*   DESCRIPTION:  
-*   INPUTS:         none
+*   DESCRIPTION:    maps text-mode-video memory into user space
+*   INPUTS:         uint9_t screen start- start of screen
 *   OUTPUTS:        none
 *   RETURN VALUE:   none
-*   SIDE EFFECTS:   none
+*   SIDE EFFECTS:   do nothing rn
 *
 */
 int32_t vidmap(uint8_t** screen_start) {
@@ -271,11 +283,11 @@ int32_t vidmap(uint8_t** screen_start) {
 
 /* TODO
 * set_handler
-*   DESCRIPTION:  
+*   DESCRIPTION:    signal handling
 *   INPUTS:         none
 *   OUTPUTS:        none
 *   RETURN VALUE:   none
-*   SIDE EFFECTS:   none
+*   SIDE EFFECTS:   do nothing rn
 *
 */
 int32_t set_handler(int32_t signum, void* handler_address) {
@@ -284,11 +296,11 @@ int32_t set_handler(int32_t signum, void* handler_address) {
 
 /* TODO
 * sigreturn
-*   DESCRIPTION:  
+*   DESCRIPTION:    signal handling
 *   INPUTS:         none
 *   OUTPUTS:        none
 *   RETURN VALUE:   none
-*   SIDE EFFECTS:   none
+*   SIDE EFFECTS:   do nothing rn
 *
 */
 int32_t sigreturn(void) {
