@@ -2,16 +2,20 @@ boot.o: boot.S multiboot.h x86_desc.h types.h
 ex_wrapper.o: ex_wrapper.S ex_wrapper.h
 int_wrapper.o: int_wrapper.S int_wrapper.h
 x86_desc.o: x86_desc.S x86_desc.h types.h
-ex_handler.o: ex_handler.c ex_handler.h lib.h types.h ex_wrapper.h
+ex_handler.o: ex_handler.c ex_handler.h lib.h types.h ex_wrapper.h \
+  x86_desc.h
 file_system.o: file_system.c file_system.h types.h lib.h
 i8259.o: i8259.c i8259.h types.h lib.h
 idt.o: idt.c idt.h x86_desc.h types.h ex_wrapper.h int_wrapper.h \
   ex_handler.h lib.h
 kernel.o: kernel.c multiboot.h types.h x86_desc.h lib.h i8259.h debug.h \
-  tests.h keyboard.h paging.h rtc.h file_system.h
+  tests.h keyboard.h paging.h rtc.h syscall_handler.h file_system.h
 keyboard.o: keyboard.c keyboard.h lib.h types.h i8259.h int_wrapper.h
 lib.o: lib.c lib.h types.h
 paging.o: paging.c paging.h types.h x86_desc.h
 rtc.o: rtc.c rtc.h lib.h types.h i8259.h
+syscall_handler.o: syscall_handler.c syscall_handler.h lib.h types.h \
+  file_system.h x86_desc.h keyboard.h i8259.h rtc.h paging.h \
+  int_wrapper.h
 tests.o: tests.c tests.h x86_desc.h types.h lib.h rtc.h i8259.h paging.h \
-  keyboard.h file_system.h
+  keyboard.h file_system.h syscall_handler.h

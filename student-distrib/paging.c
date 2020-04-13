@@ -16,15 +16,15 @@ uint32_t page_table[PAGE_SIZE] __attribute__((aligned (PAGE_SIZE)));
 */
 void init_paging(){
     int i;
-
+	//initialize video memory part of paging
     for(i = 0; i < TABLE_SIZE; i++){
         page_table[i] = ((i == VIDEO_LOC/PAGE_SIZE)) ? ((VIDEO_LOC) | (DEFAULT_PTE)) : ((DEFAULT_PTE) ^ (PTE_P));
     }
-
+	//initialize the rest of the omb to 4mb
     page_directory[0] = (uint32_t) page_table | PDE_RW | PDE_P;
-
+	//initialize the kernel to 4mb to 8mb
     page_directory[1] = KERNEL_LOC | PDE_PS | DEFAULT_PTE;
-
+	//set the rest to not present
     for(i = 2; i < TABLE_SIZE; i++){
         page_directory[i] = (i << PDE_4MP_PBA_OFFSET) | PDE_PS | PDE_RW;
     }
@@ -44,5 +44,40 @@ void init_paging(){
 		:
 		: "eax"
 	);
+}
 
+/*
+* change_process
+*   DESCRIPTION:  Sets up new page for new current process (user program or something) and flushes out TLB
+*   INPUTS:         int pid
+*   OUTPUTS:        none
+*   RETURN VALUE:   none
+*   SIDE EFFECTS:   flushes tlb, sets up memory for new process
+*
+*/
+void change_process(int pid){
+	// changes process and cleans out TLB
+	page_directory[USER_PROCESS_INDEX] = (PROCESS_LOC(pid)) | PDE_PS | PDE_US | PDE_RW | PDE_P;
+	flush_tlb();
+}
+
+
+/*
+* flush_tlb()
+*   DESCRIPTION:  Cleans out TLB for fresh memory accesses
+*   INPUTS:         none
+*   OUTPUTS:        none
+*   RETURN VALUE:   none
+*   SIDE EFFECTS:   resets tlb
+*
+*/
+void flush_tlb(){
+	asm volatile("						\n\
+		movl	%%cr3,%%eax				\n\
+		movl	%%eax,%%cr3				\n\
+		"
+		:
+		:
+		: "eax"
+	);
 }

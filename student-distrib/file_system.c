@@ -144,7 +144,7 @@ void print_file(dentry_t* file){
     uint32_t i = 0;
     int32_t fd = file->inode_num;
     int j, num_bytes;
-    while((num_bytes = file_read(&fd, buf, NUM_BYTES, &i)))
+    while((num_bytes = file_read(fd, buf, NUM_BYTES, i)))
         for(j = 0; j < num_bytes; j++) putc(buf[j]);
     printf("\n");
 }
@@ -156,11 +156,11 @@ void print_file(dentry_t* file){
  * Outputs: 0 if work, -1 if no
  * Side Effects: write to fd
  */
-int32_t file_open (const uint8_t* filename, int32_t * fd){
+int32_t file_open (const uint8_t* filename){//, int32_t * fd){
     dentry_t file;
     //read dentry by filename and set fd
     if(-1 == read_dentry_by_name((int8_t*)filename, &file)) return FAILURE;
-    *fd = file.inode_num;
+    //*fd = file.inode_num;
     return SUCCESS;
 }
 
@@ -170,9 +170,9 @@ int32_t file_open (const uint8_t* filename, int32_t * fd){
  * Outputs: 0 if work, -1 if no
  * Side Effects: write to fd
  */
-int32_t file_close (int32_t * fd){
+int32_t file_close (int32_t fd){
     // set fd to 0 to close
-    * fd  = 0;
+    fd  = 0;
     return SUCCESS;
 }
 
@@ -182,7 +182,7 @@ int32_t file_close (int32_t * fd){
  * Outputs: 0 if work, -1 if no
  * Side Effects: none
  */
-int32_t file_write (int32_t * fd, const void* buf, int32_t nbytes){
+int32_t file_write (int32_t fd, const void* buf, int32_t nbytes){
     //should not write so auto fail
     return FAILURE;
 }
@@ -193,25 +193,25 @@ int32_t file_write (int32_t * fd, const void* buf, int32_t nbytes){
  * Outputs: number of read
  * Side Effects: calls read_data
  */
-int32_t file_read (int32_t* fd, uint8_t* buf, int32_t nbytes, uint32_t * offset){
+int32_t file_read (int32_t fd, uint8_t* buf, int32_t nbytes, uint32_t offset){
     uint32_t read;
     //data is read until end of file or until end of buffer
-    read = read_data(*fd,*offset,buf,nbytes);
-    if(read > 0) *offset += read;
+    read = read_data(fd,offset,buf,nbytes);
+    if(read > 0) offset += read;
     return read;
 }
 
 /* dir_open
  *
  * Inputs: const uint8_t* filename (file name), int32_t * fd (file descriptor)
- * Outputs: 0 if work, -1 if nto work
+ * Outputs: 0 if work, -1 if not work
  * Side Effects: writes to fd
  */
-int32_t dir_open (const uint8_t* filename, int32_t * fd){
+int32_t dir_open (const uint8_t* filename){//, int32_t * fd){
     dentry_t file;
     //sets fd to inode number bsaed on the filename given
     if(-1 == read_dentry_by_name((int8_t*)filename, &file)) return FAILURE;
-    *fd = file.inode_num;
+    //*fd = file.inode_num;
     return SUCCESS;
 }
 
@@ -221,7 +221,7 @@ int32_t dir_open (const uint8_t* filename, int32_t * fd){
  * Outputs: 0 if work, -1 if nto work
  * Side Effects: none
  */
-int32_t dir_close (int32_t * fd){
+int32_t dir_close (int32_t fd){
     //should just be 0
     return SUCCESS;
 }
@@ -232,7 +232,7 @@ int32_t dir_close (int32_t * fd){
  * Outputs: 0 if work, -1 if nto work
  * Side Effects: none
  */
-int32_t dir_write (int32_t * fd, const void* buf, int32_t nbytes){
+int32_t dir_write (int32_t fd, const void* buf, int32_t nbytes){
     //should not write so auto fail
     return FAILURE;
 }
@@ -243,15 +243,27 @@ int32_t dir_write (int32_t * fd, const void* buf, int32_t nbytes){
  * Outputs: number of bytes read
  * Side Effects: changes buf
  */
-int32_t dir_read (int32_t * fd, uint8_t* buf, int32_t nbytes, uint32_t * offset){
+int32_t dir_read (int32_t fd, uint8_t* buf, int32_t nbytes, uint32_t offset){
     dentry_t dir;
     //read by index
-    if(-1 == read_dentry_by_index(*offset, &dir)) return FAILURE;
+    if(-1 == read_dentry_by_index(offset, &dir)) return FAILURE;
     //sets the number of bytes to read to be the length of the filename if greater
     if(nbytes > strlen(dir.file_name)) nbytes = strlen(dir.file_name);
     //copies the filename to buf for what files are in the directory
     strncpy((int8_t*)buf, dir.file_name, nbytes); 
     // if there is more stuff to read, go to next one
-    *offset += (nbytes > 0);
+    offset += (nbytes > 0);
     return nbytes;
+}
+
+/* load_program
+ *
+ * Inputs: fd: inode_num of program to load, addr: address to load into
+ * Outputs: 0 if work, -1 if not work
+ * Side Effects: copies program into memory
+ */
+int32_t load_program(int32_t fd, uint8_t* addr){
+    uint32_t offset = 0;
+    if(file_read(fd, addr, ((inode_t*)boot_block+fd+1)->length, offset) != ((inode_t*)boot_block+fd+1)->length) return -1;
+    return 0;
 }
