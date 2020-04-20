@@ -110,6 +110,7 @@ int32_t execute(const uint8_t* command) {
     dentry_t dentry;
     int i, j, pid;
     uint32_t offset = 0;
+    uint8_t args[ARGS_SIZE]
 
     // Null check command
     if(!command) return FAILURE;
@@ -121,7 +122,9 @@ int32_t execute(const uint8_t* command) {
     // get valid command
     for(i = 0; i < 32 && command[i] != ' '; i++) fname[i] = command[i];
 
+    for(j = 0; command[i+j] != '\0'; j++) args[j] = command[i+j];
     
+    args[j] = '\0';
 
     // if file is valid, continue
     if(read_dentry_by_name((int8_t*)fname, &dentry)) return FAILURE;
@@ -139,7 +142,7 @@ int32_t execute(const uint8_t* command) {
     /* for every open process, set PCB */
     pcb_t* pcb = (pcb_t*)(K_MEM_END - KSTACK_SIZE * (pid+1));
 
-    for(j = 0; command[i+j] != '\0'; j++) pcb->args[j] = command[i+j];
+    for(i = 0; args[i] != '\0'; i++) pcb->args[i] = args[i];
 
 
     for(i = 0; i < MAX_OPEN_FILES; i++){
