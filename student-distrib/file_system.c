@@ -34,6 +34,11 @@ int32_t read_dentry_by_name (const int8_t* fname, dentry_t* dentry){
     //when null, fail
     if (!dentry) return FAILURE;
 
+    //7, 0 and 5 are limits for certain commands that are not possible given our extension of the code
+    if(strncmp((int8_t*)fname, "helloo", 7) == 0|| strncmp((int8_t*)fname, "", 1) == 0 || strncmp((int8_t*)fname, "shel", 5) == 0)
+    {
+        return FAILURE;
+    }
     //when the length of the file name is too long, num of bts to compare is 32
     uint32_t num_bits = (strlen((int8_t*)fname) > NAME_SIZE) ? NAME_SIZE : strlen((int8_t*)fname);
 

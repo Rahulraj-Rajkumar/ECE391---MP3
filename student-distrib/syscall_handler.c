@@ -110,7 +110,7 @@ int32_t execute(const uint8_t* command) {
     dentry_t dentry;
     int i, j, pid;
     uint32_t offset = 0;
-    uint8_t args[ARGS_SIZE]
+    uint8_t args[ARGS_SIZE];
 
     // Null check command
     if(!command) return FAILURE;
@@ -234,13 +234,19 @@ int32_t write(int32_t fd, const void* buf, int32_t nbytes) {
 int32_t open(const uint8_t* filename) {
     dentry_t dentry;
     int i, j, esp;
+    int test;
     asm("movl %%esp, %0" : "=r"(esp) :);
     pcb_t* pcb = (pcb_t *)(esp & 0xFFFFE000);
 
     //checks bounds
     if(!filename) return FAILURE;
 
-    read_dentry_by_name((const int8_t*)filename, &dentry);
+    test = read_dentry_by_name((const int8_t*)filename, &dentry);
+
+    if(test == -1)
+    {
+        return FAILURE;
+    }
 
     for(i = 0; i < 8 && pcb->file_array[i].flags; i++);
 
