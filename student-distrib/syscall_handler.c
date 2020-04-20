@@ -5,6 +5,7 @@
 typedef struct fd_t {
     int32_t (*fop_jump_table[NUM_FOPS])();
     int32_t inode;
+    int32_t file_type;
     int32_t file_position;
     uint32_t flags;
 } fd_t;
@@ -143,6 +144,7 @@ int32_t execute(const uint8_t* command) {
     for(i = 0; i < MAX_OPEN_FILES; i++){
         for(j = 0; j < NUM_FOPS; j++) pcb->file_array[i].fop_jump_table[j] = (i < 2) ? std_table[i][j] : nofunc_table[j];
         pcb->file_array[i].inode = 0;
+        pcb->file_array[i].file_type = -1;
         pcb->file_array[i].file_position = 0;
         pcb->file_array[i].flags = (i < 2) ? 1 : 0;
     }
@@ -188,7 +190,8 @@ int32_t read(int32_t fd, void* buf, int32_t nbytes) {
     //read file from array and file directory, return nbytes read
     retval = pcb->file_array[fd].fop_jump_table[READ_INDEX](pcb->file_array[fd].inode, buf, nbytes, pcb->file_array[fd].file_position);
 
-    pcb->file_array[fd].file_position += retval;
+
+    pcb->file_array[fd].file_position += (pcb->file_array[fd].file_type == 1) ? (retval > 0) : retval;
 
     return retval;
 }
@@ -242,6 +245,7 @@ int32_t open(const uint8_t* filename) {
     //finds dentry based on name, allocated unused fd and set up data to handle file type
     for(j = 0; j < NUM_FOPS; j++) pcb->file_array[i].fop_jump_table[j] = file_table[dentry.file_type][j];
     pcb->file_array[i].inode = dentry.inode_num;
+    pcb->file_array[i].file_type = dentry.file_type;
     pcb->file_array[i].file_position = 0;
     pcb->file_array[i].flags = 1;
 

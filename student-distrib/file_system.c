@@ -253,8 +253,8 @@ int32_t dir_read (int32_t fd, uint8_t* buf, int32_t nbytes, uint32_t offset){
     //copies the filename to buf for what files are in the directory
     strncpy((int8_t*)buf, dir.file_name, nbytes); 
     // if there is more stuff to read, go to next one
-    offset += (nbytes > 0);
-    return nbytes;
+    // offset += (nbytes > 0);
+    return (nbytes);
 }
 
 /* load_program
