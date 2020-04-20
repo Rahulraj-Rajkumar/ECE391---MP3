@@ -11,6 +11,7 @@ typedef struct fd_t {
 
 // Process Control Block struct. If you need more info, RTDC 6.3.5
 typedef struct pcb_t {
+    uint8_t args[ARGS_SIZE];
     fd_t file_array[MAX_OPEN_PROCESSES];
     int8_t pid;
     uint32_t parent_esp;
@@ -116,6 +117,8 @@ int32_t execute(const uint8_t* command) {
     // get valid command
     for(i = 0; i < 32 && command[i] != ' '; i++) fname[i] = command[i];
 
+    
+
     // if file is valid, continue
     if(read_dentry_by_name((int8_t*)fname, &dentry)) return FAILURE;
     if(!file_read(dentry.inode_num, buf, 4, offset)) return FAILURE;
@@ -132,12 +135,15 @@ int32_t execute(const uint8_t* command) {
     /* for every open process, set PCB */
     pcb_t* pcb = (pcb_t*)(K_MEM_END - KSTACK_SIZE * (pid+1));
 
+    for(j = 0; command[i+j] != '\0'; j++) pcb->args[j] = command[i+j];
+
     for(i = 0; i < MAX_OPEN_PROCESSES; i++){
         for(j = 0; j < NUM_FOPS; j++) pcb->file_array[i].fop_jump_table[j] = (i < 2) ? std_table[i][j] : nofunc_table[j];
         pcb->file_array[i].inode = 0;
         pcb->file_array[i].file_position = 0;
         pcb->file_array[i].flags = (i < 2) ? 1 : 0;
     }
+    
     pcb->pid = pid;
 
     /* close out of function safely by handling registers */
@@ -278,12 +284,12 @@ int32_t getargs(uint8_t* buf, int32_t nbytes) {
 	
     pcb_t * curr_pcb = (pcb_t *)(K_MEM_END - (curr_pid + 1) * K_STACK_SIZE);
 	
-	if( strlen((const int8_t*)curr_pcb->bufargs) > nbytes )
+	if( strlen((const int8_t*)curr_pcb->args) > nbytes )
 	{
 		return -1;
 	}
 	
-	strcpy((int8_t*)buf, (const int8_t*)curr_pcb->bufargs);
+	strcpy((int8_t*)buf, (const int8_t*)curr_pcb->args);
 	return 0;
 }
 

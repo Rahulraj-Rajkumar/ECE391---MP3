@@ -13,6 +13,7 @@
 #define MAX_OPEN_PROCESSES 8
 #define KSTACK_SIZE 0x2000
 #define NUM_FOPS 4
+#define ARGS_SIZE 100
 #define STDIN 0
 #define STDOUT 1
 #define K_MEM_END  0x800000
