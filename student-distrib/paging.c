@@ -23,6 +23,8 @@ void init_paging(){
         vid_page_table[i] = ((i == VIDEO_LOC/PAGE_SIZE)) ? ((VIDEO_LOC) | (DEFAULT_PTE)) : ((DEFAULT_PTE) ^ (PTE_P));
     }
 
+
+/*  initialize video paging */
 	user_vid_page_table[0] = VIDEO_LOC | PTE_US | DEFAULT_PTE;
 
 	//initialize the rest of the omb to 4mb

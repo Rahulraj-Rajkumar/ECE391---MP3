@@ -209,7 +209,7 @@ int32_t read(int32_t fd, void* buf, int32_t nbytes) {
 int32_t write(int32_t fd, const void* buf, int32_t nbytes) {
     int esp, retval;
     asm("movl %%esp, %0" : "=r"(esp) :);
-    pcb_t* pcb = (pcb_t *)(esp & 0xFFFFE000);
+    pcb_t* pcb = (pcb_t *)(esp & PCB_WRITE_BITMASK);
     
     // check bounds
     if(fd < 0 || fd >= MAX_OPEN_FILES || !buf) return FAILURE;
@@ -279,26 +279,31 @@ int32_t close(int32_t fd) {
 
 /* TODO
 * getargs
-*   DESCRIPTION:  
-*   INPUTS:         none
-*   OUTPUTS:        none
+*   DESCRIPTION:   Allows for executables to accept arguments (such as cat and grep)
+*   INPUTS:         buf - command to be executed
+*                   nbytes - size of args
+*   OUTPUTS:        0 if success, -1 if not
 *   RETURN VALUE:   none
 *   SIDE EFFECTS:   none
 *
 */
 int32_t getargs(uint8_t* buf, int32_t nbytes) {
+
+    /* check if parameters are valid */
     if( buf == NULL || nbytes == 0 )
 	{
 		return -1;
 	}
 	
+    /* get current pcb struct */
     pcb_t * curr_pcb = (pcb_t *)(K_MEM_END - (curr_pid + 1) * K_STACK_SIZE);
 	
+    /* check if arguments too long */
 	if( strlen((const int8_t*)curr_pcb->args) > nbytes )
 	{
 		return -1;
 	}
-	
+	/* update pcb->args with buf data */
 	strcpy((int8_t*)buf, (const int8_t*)curr_pcb->args);
 	return 0;
 }
@@ -306,17 +311,20 @@ int32_t getargs(uint8_t* buf, int32_t nbytes) {
 /* TODO
 * vidmap
 *   DESCRIPTION:    maps text-mode-video memory into user space
-*   INPUTS:         uint9_t screen start- start of screen
+*   INPUTS:         uint9_t screen start- start of screen data
 *   OUTPUTS:        none
-*   RETURN VALUE:   none
-*   SIDE EFFECTS:   do nothing rn
+*   RETURN VALUE:   0 if success, -1 if not 
+*   SIDE EFFECTS:   sets up video memory for something like fish program
 *
 */
 int32_t vidmap(uint8_t** screen_start) {
+
+    /* check if screen start is a valid parameter for sanity check */
     if(screen_start == NULL) return -1;
     if((uint32_t) screen_start < USER_VID_MEM - FOUR_MB) return -1;
     if((uint32_t) screen_start >= USER_VID_MEM) return -1;
 
+/* set screen start to specific location in memory */
     *screen_start = (uint8_t *)(USER_VID_MEM);
     return 0;
 }
