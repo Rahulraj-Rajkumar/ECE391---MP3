@@ -197,7 +197,7 @@ int32_t file_read (int32_t fd, uint8_t* buf, int32_t nbytes, uint32_t offset){
     uint32_t read;
     //data is read until end of file or until end of buffer
     read = read_data(fd,offset,buf,nbytes);
-    if(read > 0) offset += read;
+    //if(read > 0) offset += read;
     return read;
 }
 

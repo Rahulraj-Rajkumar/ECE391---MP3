@@ -10,7 +10,8 @@
 #include "paging.h"
 
 #define PCB_BITMASK 0xFFFFE000
-#define MAX_OPEN_PROCESSES 8
+#define MAX_OPEN_PROCESSES 3
+#define MAX_OPEN_FILES 8
 #define KSTACK_SIZE 0x2000
 #define NUM_FOPS 4
 #define ARGS_SIZE 100
@@ -21,6 +22,7 @@
 #define K_STACK_SIZE    0x2000
 #define WORD_SIZE       4
 #define USR_START_ADDR  0x08048000
+#define USER_VID_MEM    0x8400000
 #define ADDR_DIST_EIP   24
 #define USR_STACK_ADDR  0x8400000 - WORD_SIZE
 #define PCB_BITMASK     0xFFFFE000

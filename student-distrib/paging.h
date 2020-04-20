@@ -40,6 +40,7 @@
 #define PROCESS_LOC(n)      (n+2) * PAGE_SIZE * TABLE_SIZE
 
 #define USER_PROCESS_INDEX  32
+#define USER_VID_PT_INDEX   33
 
 void init_paging();
 
