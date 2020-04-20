@@ -271,7 +271,20 @@ int32_t close(int32_t fd) {
 *
 */
 int32_t getargs(uint8_t* buf, int32_t nbytes) {
-    return -1;
+    if( buf == NULL || nbytes == 0 )
+	{
+		return -1;
+	}
+	
+    pcb_t * curr_pcb = (pcb_t *)(K_MEM_END - (curr_pid + 1) * K_STACK_SIZE);
+	
+	if( strlen((const int8_t*)curr_pcb->bufargs) > nbytes )
+	{
+		return -1;
+	}
+	
+	strcpy((int8_t*)buf, (const int8_t*)curr_pcb->bufargs);
+	return 0;
 }
 
 /* TODO
