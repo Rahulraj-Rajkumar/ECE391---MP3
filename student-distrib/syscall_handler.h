@@ -32,6 +32,8 @@
 #define OPEN_INDEX      2
 #define CLOSE_INDEX     3
 
+#define PCB_WRITE_BITMASK       0xFFFFE000
+
 
 
 int32_t halt(uint8_t status);
