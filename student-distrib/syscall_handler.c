@@ -11,7 +11,8 @@ typedef struct fd_t {
 
 // Process Control Block struct. If you need more info, RTDC 6.3.5
 typedef struct pcb_t {
-    fd_t file_array[MAX_OPEN_PROCESSES];
+    uint8_t args[ARGS_SIZE];
+    fd_t file_array[MAX_OPEN_FILES];
     int8_t pid;
     uint32_t parent_esp;
     uint32_t parent_ebp;
@@ -63,6 +64,8 @@ int32_t halt(uint8_t status) {
 
     process_array[curr_pid] = 0;
 
+    curr_pid = curr_pcb->parent_pid;
+
 	asm volatile("movl %0, %%esp"::"g"(curr_pcb->parent_esp)); // Asm stuff put the "parent_ksp" into the %ESP
 	asm volatile("movl %0, %%ebp"::"g"(curr_pcb->parent_ebp)); // Asm stuff put the "parent_kbp" into the %EBP
 	
@@ -85,7 +88,7 @@ int32_t halt(uint8_t status) {
 int get_next_pid(){
     int i;
     //returns the next in array
-    for(i = 0; process_array[i] && i < 8; i++){}
+    for(i = 0; process_array[i] && i < MAX_OPEN_PROCESSES; i++){}
     return i;
 }
 
@@ -110,11 +113,13 @@ int32_t execute(const uint8_t* command) {
     if(!command) return FAILURE;
 
     // if no available next process ID, return -1
-    if((pid = get_next_pid()) > MAX_OPEN_PROCESSES) return FAILURE;
+    if((pid = get_next_pid()) >= MAX_OPEN_PROCESSES) return FAILURE;
 
 
     // get valid command
     for(i = 0; i < 32 && command[i] != ' '; i++) fname[i] = command[i];
+
+    
 
     // if file is valid, continue
     if(read_dentry_by_name((int8_t*)fname, &dentry)) return FAILURE;
@@ -132,12 +137,15 @@ int32_t execute(const uint8_t* command) {
     /* for every open process, set PCB */
     pcb_t* pcb = (pcb_t*)(K_MEM_END - KSTACK_SIZE * (pid+1));
 
-    for(i = 0; i < MAX_OPEN_PROCESSES; i++){
+    for(j = 0; command[i+j] != '\0'; j++) pcb->args[j] = command[i+j];
+
+    for(i = 0; i < MAX_OPEN_FILES; i++){
         for(j = 0; j < NUM_FOPS; j++) pcb->file_array[i].fop_jump_table[j] = (i < 2) ? std_table[i][j] : nofunc_table[j];
         pcb->file_array[i].inode = 0;
         pcb->file_array[i].file_position = 0;
         pcb->file_array[i].flags = (i < 2) ? 1 : 0;
     }
+    
     pcb->pid = pid;
 
     /* close out of function safely by handling registers */
@@ -172,12 +180,14 @@ int32_t read(int32_t fd, void* buf, int32_t nbytes) {
     pcb_t* pcb = (pcb_t *)(esp & 0xFFFFE000);
 
     //if out of bounds fail
-    if(fd < 0 || fd >= MAX_OPEN_PROCESSES || !buf) return FAILURE;
+    if(fd < 0 || fd >= MAX_OPEN_FILES || !buf) return FAILURE;
 
     sti();
 
     //read file from array and file directory, return nbytes read
-    retval = pcb->file_array[fd].fop_jump_table[READ_INDEX](pcb->file_array[fd].inode, buf, nbytes);
+    retval = pcb->file_array[fd].fop_jump_table[READ_INDEX](pcb->file_array[fd].inode, buf, nbytes, pcb->file_array[fd].file_position);
+
+    pcb->file_array[fd].file_position += retval;
 
     return retval;
 }
@@ -197,7 +207,7 @@ int32_t write(int32_t fd, const void* buf, int32_t nbytes) {
     pcb_t* pcb = (pcb_t *)(esp & 0xFFFFE000);
     
     // check bounds
-    if(fd < 0 || fd >= MAX_OPEN_PROCESSES || !buf) return FAILURE;
+    if(fd < 0 || fd >= MAX_OPEN_FILES || !buf) return FAILURE;
 
     retval = pcb->file_array[fd].fop_jump_table[WRITE_INDEX](pcb->file_array[fd].inode, buf, nbytes);
 
@@ -254,7 +264,7 @@ int32_t close(int32_t fd) {
     pcb_t* pcb = (pcb_t *)(esp & 0xFFFFE000);
 
     //check bounds
-    if(fd < 0 || fd >= MAX_OPEN_PROCESSES) return FAILURE;
+    if(fd < 0 || fd >= MAX_OPEN_FILES) return FAILURE;
 
     retval = pcb->file_array[fd].fop_jump_table[CLOSE_INDEX](pcb->file_array[fd].inode);
 
@@ -271,7 +281,20 @@ int32_t close(int32_t fd) {
 *
 */
 int32_t getargs(uint8_t* buf, int32_t nbytes) {
-    return -1;
+    if( buf == NULL || nbytes == 0 )
+	{
+		return -1;
+	}
+	
+    pcb_t * curr_pcb = (pcb_t *)(K_MEM_END - (curr_pid + 1) * K_STACK_SIZE);
+	
+	if( strlen((const int8_t*)curr_pcb->args) > nbytes )
+	{
+		return -1;
+	}
+	
+	strcpy((int8_t*)buf, (const int8_t*)curr_pcb->args);
+	return 0;
 }
 
 /* TODO
@@ -284,7 +307,12 @@ int32_t getargs(uint8_t* buf, int32_t nbytes) {
 *
 */
 int32_t vidmap(uint8_t** screen_start) {
-    return -1;
+    if(screen_start == NULL) return -1;
+    if((uint32_t) screen_start < USER_VID_MEM - FOUR_MB) return -1;
+    if((uint32_t) screen_start >= USER_VID_MEM) return -1;
+
+    *screen_start = (uint8_t *)(USER_VID_MEM);
+    return 0;
 }
 
 /* TODO
