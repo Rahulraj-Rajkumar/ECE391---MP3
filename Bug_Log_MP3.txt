@@ -33,10 +33,6 @@ Fix: misspelled initialize in rtc.h
 Who: Vinayak Dhanawade :D
 
 
-
-
-
-
 Keyboard outputs would not write to top row of console
 When 3/22/2020
 Fix: Edited putc function in lib.c to properly account for rows
@@ -53,3 +49,57 @@ Compilation warnings for unused variables in user test functions
 When: 3/20/2020
 Fix: set “unused” variables (used for dereferencing) to 0 after they are used
 Who: Rahul Rajkumar
+
+
+Keyboard printing odd characters that aren't actually being typed
+When: 3/25/2020
+Fix: Only allow scancodes within the accepted range
+Who: Rahul Rajkumar
+
+
+Backspace doesn’t work properly when deleting over a line break
+When: 3/26/2020
+Fix: added new putc function to inhibit scrolling when backspacing over a line break
+Who: Rahul Rajkumar
+
+
+Ctrl+L doesn’t move cursor back to start
+When: 3/27/2020
+Fix: created new reset function to move cursor to start after clearing screen
+Who: Rahul Rajkumar
+
+
+Read Write functions don’t always end with \n character 
+When: 3/28/2020
+Fix: manually edited buffer before copying it (made a new copy of the keyboard buffer)
+Who: Rahul Rajkumar
+
+
+Terminal_read skips a character
+When: 3/29/2020
+Fix: when copying buf, do not copy over endl char that is put on screen
+Who: Matthew Nolan
+
+
+Keyboard Buffer only allowed 126 characters to be added
+When: 4/4/2020
+Fix: Changed a -2 to a -1 (Thought that I needed extra space for \n char)
+Who Rahul Rajkumar
+
+
+Page Fault Exception When Running Pingpong and Fish
+When : 4/15/2020
+Fix: Reverted to old commit with working pingpong and added new vidmap changes to it
+Who: Vinayak Dhanawade
+
+
+Grep and Cat just not working
+When: 4/16/2020
+Fix: a couple of syntax errors in getargs
+Who: Rahul Rajkumar
+
+
+Multiple Shells causes a number of issues, including page fault exception when exiting some
+When: 4/14/2020
+Fix: some semantics error in coding out logic for multiple shells
+Who: Matthew Nolan
