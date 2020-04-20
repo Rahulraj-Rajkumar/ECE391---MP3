@@ -26,7 +26,7 @@ int curr_pid;
 
 int first_process = 1;
 
-int32_t no_func(){return 0;}
+int32_t no_func(){return -1;}
 
 /* Initializes tables for stdin, stdout, RTC and files */ 
 int32_t (*nofunc_table[NUM_FOPS])() = {no_func, no_func, no_func, no_func}; 
@@ -140,6 +140,7 @@ int32_t execute(const uint8_t* command) {
     pcb_t* pcb = (pcb_t*)(K_MEM_END - KSTACK_SIZE * (pid+1));
 
     for(j = 0; command[i+j] != '\0'; j++) pcb->args[j] = command[i+j];
+
 
     for(i = 0; i < MAX_OPEN_FILES; i++){
         for(j = 0; j < NUM_FOPS; j++) pcb->file_array[i].fop_jump_table[j] = (i < 2) ? std_table[i][j] : nofunc_table[j];

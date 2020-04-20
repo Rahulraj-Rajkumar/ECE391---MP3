@@ -37,7 +37,8 @@ int32_t terminal_open(const uint8_t* filename){
 *   SIDE EFFECTS:   none
 *
 */
-int32_t terminal_close(int32_t fd){
+int32_t terminal_close(int32_t* fd){
+  if(fd == NULL) return -1;
   return 0;
 }
 
