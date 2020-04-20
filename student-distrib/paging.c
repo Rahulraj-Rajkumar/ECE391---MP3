@@ -15,6 +15,7 @@ uint32_t user_vid_page_table[PAGE_SIZE] __attribute__((aligned (PAGE_SIZE)));
 *   SIDE EFFECTS:   Initializes paging
 *
 */
+
 void init_paging(){
     int i;
 	//initialize video memory part of paging

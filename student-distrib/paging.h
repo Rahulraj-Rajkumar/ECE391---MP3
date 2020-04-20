@@ -35,6 +35,7 @@
 #define PTE_Avail           0x200
 #define PTE_PBA_OFFSET      12
 
+
 #define DEFAULT_PTE         PTE_RW | PTE_P
 
 #define PROCESS_LOC(n)      (n+2) * PAGE_SIZE * TABLE_SIZE
