@@ -28,6 +28,9 @@ sys_int_w:
     cmpl    $10, %eax
     ja      syscall_error
 
+    cmpl    $0, %eax
+    jle     syscall_error
+
     pushl   %esi
     pushl   %edi
     pushl   %ebx
