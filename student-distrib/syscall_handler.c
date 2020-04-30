@@ -122,6 +122,8 @@ int32_t execute(const uint8_t* command) {
     // get valid command
     for(i = 0; i < 32 && command[i] != ' '; i++) fname[i] = command[i];
 
+    i++;
+
     for(j = 0; command[i+j] != '\0'; j++) args[j] = command[i+j];
     
     args[j] = '\0';
