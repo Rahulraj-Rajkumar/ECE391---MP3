@@ -18,11 +18,18 @@ typedef struct pcb_t {
     uint32_t parent_esp;
     uint32_t parent_ebp;
     int8_t parent_pid;
+    int8_t terminal;
 } pcb_t;
 
+// indices represent numbered PID's, values stored is a bool flag showing status of process (0 is off, 1 is active)
 int process_array[MAX_OPEN_PROCESSES];
 
+// indices represent the number of terminal, values stored is the PID of the active process in that terminal 
+int terminal_array[NUM_TERMINALS];
+
 int curr_pid;
+
+int curr_terminal;
 
 int first_process = 1;
 

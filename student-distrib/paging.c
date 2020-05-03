@@ -64,9 +64,9 @@ void init_paging(){
 *   SIDE EFFECTS:   flushes tlb, sets up memory for new process
 *
 */
-void change_process(int pid){
+void change_process(int terminal, int pid){
 	// changes process and cleans out TLB
-	page_directory[USER_PROCESS_INDEX] = (PROCESS_LOC(pid)) | PDE_PS | PDE_US | PDE_RW | PDE_P;
+	page_directory[USER_PROCESS_INDEX] = (PROCESS_LOC(terminal, pid)) | PDE_PS | PDE_US | PDE_RW | PDE_P;
 	flush_tlb();
 }
 

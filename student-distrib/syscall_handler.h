@@ -10,7 +10,8 @@
 #include "paging.h"
 
 #define PCB_BITMASK 0xFFFFE000
-#define MAX_OPEN_PROCESSES 3
+#define MAX_OPEN_PROCESSES 6
+#define NUM_TERMINALS   3
 #define MAX_OPEN_FILES 8
 #define KSTACK_SIZE 0x2000
 #define NUM_FOPS 4
