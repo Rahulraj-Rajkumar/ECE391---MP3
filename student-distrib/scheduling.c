@@ -16,9 +16,9 @@ void initialize_pit() {
 void pit_int(){
     cli();
 
-    next_process();
-
     send_eoi(PIT_IRQ);
+
+    next_process();
 
     sti();
 }
