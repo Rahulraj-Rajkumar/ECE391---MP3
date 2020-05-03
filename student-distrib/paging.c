@@ -20,7 +20,7 @@ void init_paging(){
     int i;
 	//initialize video memory part of paging
     for(i = 0; i < TABLE_SIZE; i++){
-        vid_page_table[i] = ((i == VIDEO_LOC/PAGE_SIZE)) ? ((VIDEO_LOC) | (DEFAULT_PTE)) : ((DEFAULT_PTE) ^ (PTE_P));
+        vid_page_table[i] = ((i != 0)) ? ((i << PTE_PBA_OFFSET) | (DEFAULT_PTE)) : ((DEFAULT_PTE) ^ (PTE_P));
     }
 
 
@@ -64,7 +64,7 @@ void init_paging(){
 *   SIDE EFFECTS:   flushes tlb, sets up memory for new process
 *
 */
-void change_process(int terminal, int pid){
+void change_process(int pid, int terminal{
 	// changes process and cleans out TLB
 	page_directory[USER_PROCESS_INDEX] = (PROCESS_LOC(terminal, pid)) | PDE_PS | PDE_US | PDE_RW | PDE_P;
 	flush_tlb();

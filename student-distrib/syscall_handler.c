@@ -17,6 +17,8 @@ typedef struct pcb_t {
     int8_t pid;
     uint32_t parent_esp;
     uint32_t parent_ebp;
+    uint32_t esp;
+    uint32_t ebp;
     int8_t parent_pid;
     int8_t terminal;
 } pcb_t;
@@ -56,7 +58,7 @@ int32_t (*file_table[NUM_FILE_TYPES][NUM_FOPS])() = {
 *
 */
 int32_t halt(uint8_t status) {
-    pcb_t * curr_pcb = (pcb_t *)(K_MEM_END - (curr_pid + 1) * K_STACK_SIZE);
+    pcb_t * curr_pcb = (pcb_t *)(K_MEM_END - (terminal_array[curr_terminal] + 1) * K_STACK_SIZE);
 
     //check for bounds of parent process, if good, go to helper function to change process
     if(curr_pcb->parent_pid < 0)
@@ -70,9 +72,9 @@ int32_t halt(uint8_t status) {
         tss.esp0 = K_MEM_END - K_STACK_SIZE * curr_pcb->parent_pid - WORD_SIZE;
     }   
 
-    process_array[curr_pid] = 0;
+    process_array[terminal_array[curr_terminal]] = 0;
 
-    curr_pid = curr_pcb->parent_pid;
+    terminal_array[curr_terminal] = curr_pcb->parent_pid;
 
 	asm volatile("movl %0, %%esp"::"g"(curr_pcb->parent_esp)); // Asm stuff put the "parent_ksp" into the %ESP
 	asm volatile("movl %0, %%ebp"::"g"(curr_pcb->parent_ebp)); // Asm stuff put the "parent_kbp" into the %EBP
@@ -144,7 +146,7 @@ int32_t execute(const uint8_t* command) {
 
     if(load_program(dentry.inode_num, (uint8_t *)USR_START_ADDR)) return FAILURE;
         
-    curr_pid = pid;
+    terminal_array[curr_terminal] = pid;
 
     process_array[pid] = 1;
 
@@ -314,7 +316,7 @@ int32_t getargs(uint8_t* buf, int32_t nbytes) {
 	}
 	
     /* get current pcb struct */
-    pcb_t * curr_pcb = (pcb_t *)(K_MEM_END - (curr_pid + 1) * K_STACK_SIZE);
+    pcb_t * curr_pcb = (pcb_t *)(K_MEM_END - (terminal_array[curr_terminal] + 1) * K_STACK_SIZE);
 	
     /* check if arguments too long */
 	if( strlen((const int8_t*)curr_pcb->args) > nbytes )
@@ -410,4 +412,27 @@ void return_to_user(int process_id) {
             : "a"(USER_DS), "b"(EIP), "c"(USER_CS), "d"(USR_STACK_ADDR)
             : "cc"
         );
+}
+
+void next_process(){
+    uint8_t next_pid;
+    for(next_pid = (curr_pid + 1) % MAX_OPEN_PROCESSES; next_pid % MAX_OPEN_PROCESSES != curr_pid && !process_array[next_pid]; next_pid = (next_pid + 1) % MAX_OPEN_PROCESSES);
+
+    pcb_t * curr_pcb = (pcb_t *)(K_MEM_END - (curr_pid + 1) * K_STACK_SIZE);
+    pcb_t * next_pcb = (pcb_t *)(K_MEM_END - (next_pid + 1) * K_STACK_SIZE);
+
+    uint32_t ebp, esp;
+    asm("movl %%esp, %0" : "=r"(esp) :);
+    asm("movl %%ebp, %0" : "=r"(ebp) :);
+    curr_pcb->esp = esp;
+    curr_pcb->ebp = ebp;
+
+    change_process(next_pid);
+    tss.esp0 = K_MEM_END - K_STACK_SIZE * next_pid - WORD_SIZE;
+    curr_pid = next_pid;
+
+    asm volatile("movl %0, %%esp"::"g"(next_pcb->esp)); // Asm stuff put the "ksp" into the %ESP
+	asm volatile("movl %0, %%ebp"::"g"(next_pcb->ebp)); // Asm stuff put the "kbp" into the %EBP
+    asm volatile("leave");
+	asm volatile("ret");
 }
