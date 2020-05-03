@@ -68,6 +68,7 @@ void initialize_idt()
     SET_IDT_ENTRY(idt[0x11], alignment_check_ex_w);
     SET_IDT_ENTRY(idt[0x12], machine_check_ex_w);
     SET_IDT_ENTRY(idt[0x13], simd_ex_w);
+    SET_IDT_ENTRY(idt[INT_PIT], pit_int_w);
     SET_IDT_ENTRY(idt[INT_KBRD], kbrd_int_w);
     SET_IDT_ENTRY(idt[INT_RTC], rtc_int_w);
     SET_IDT_ENTRY(idt[INT_SYSCALL], sys_int_w);

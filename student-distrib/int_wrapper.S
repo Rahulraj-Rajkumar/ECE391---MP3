@@ -3,8 +3,16 @@
 
 .text
 
-.global rtc_int_w, kbrd_int_w, sys_int_w
+.global pit_int_w, rtc_int_w, kbrd_int_w, sys_int_w
 .extern halt, execute, read, write, open, close, getargs, vidmap, set_handler, sigreturn
+
+pit_int_w:
+    pushal
+    pushfl
+    call pit_int
+    popfl
+    popal
+    iret
 
 rtc_int_w:
     pushal
