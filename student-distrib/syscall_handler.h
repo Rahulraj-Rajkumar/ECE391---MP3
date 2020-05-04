@@ -12,6 +12,7 @@
 #define PCB_BITMASK 0xFFFFE000
 #define MAX_OPEN_PROCESSES 6
 #define NUM_TERMINALS   3
+#define SECOND_TERMINAL 2
 #define MAX_OPEN_FILES 8
 #define KSTACK_SIZE 0x2000
 #define NUM_FOPS 4
@@ -33,8 +34,24 @@
 #define OPEN_INDEX      2
 #define CLOSE_INDEX     3
 
+#define STD_FILES       2
+
+#define SHELL_LENGTH    6
+#define SHELL_BYTES     4
+
+#define PUSHED_REGS_SIZE 68
+
+#define MAX_NAME_LENGTH     32
+#define SHELL_LENGTH        6
+
 #define PCB_WRITE_BITMASK       0xFFFFE000
 
+#define MCREG   0x43
+#define PIT_MODE  0x36
+#define CHANNEL_0 0x40
+#define FREQ_40HZ 36157
+#define BYTEMASK  0xFF
+#define PIT_IRQ 0x0
 
 
 int32_t halt(uint8_t status);
@@ -48,5 +65,8 @@ int32_t vidmap(uint8_t** screen_start);
 int32_t set_handler(int32_t signum, void* handler_address);
 int32_t sigreturn(void);
 void return_to_user(int process_id);
-void next_process();
+uint32_t get_curr_pcb_term();
+void pit_int();
+void initialize_pit();
+int32_t execute_shells();
 #endif
