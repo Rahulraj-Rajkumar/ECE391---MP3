@@ -19,10 +19,16 @@
 #define RSHIFT_PRESS                0x36
 #define LSHIFT_RELEASE              0xAA
 #define RSHIFT_RELEASE              0xB6
+#define LALT_PRESS                  0x38
+#define LALT_RELEASE                0xB8
 #define CAPS_PRESS                  0x3A
 #define BACKSPACE_PRESS             0x0E
 #define TAB_PRESS                   0x0F
 #define ENTER_PRESS                 0x1C
+
+#define F1_SCANCODE                 0x3B
+#define F2_SCANCODE                 0x3C
+#define F3_SCANCODE                 0x3D
 
 #define ZERO_SCANCODE              '0'
 #define ONE_SCANCODE               '1'
@@ -129,6 +135,11 @@
 #define CLOSEBRACKET_SCANCODE      ']'
 #define OPENCURLB_SCANCODE         '{'
 #define CLOSECURLB_SCANCODE        '}'
+
+#define FAILURE                    -1
+#define SUCCESS                     0
+#define MAX_TERMINALS               3
+#define SECOND_TERMINAL_CASE        2
 
 
 // Scancode conversion table to take in scancode and convert it to proper outputted character value
@@ -508,6 +519,10 @@ static const uint8_t capsshiftkbrdscancode[SCANCODE_LENGTH] = {
 };
 
 
+int screenx_save[MAX_TERMINALS];
+int screeny_save[MAX_TERMINALS];
+
+
 int32_t terminal_open(const uint8_t* filename);
 
 int32_t terminal_close(int32_t* fd);
@@ -515,6 +530,7 @@ int32_t terminal_close(int32_t* fd);
 int32_t terminal_read(int32_t fd, uint8_t* buf, int32_t nbytes);
 
 int32_t terminal_write(int32_t fd, const uint8_t* buf, int32_t nbytes);
+
 
 
 void kbrd_init();
