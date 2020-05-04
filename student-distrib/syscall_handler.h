@@ -49,7 +49,7 @@
 #define MCREG   0x43
 #define PIT_MODE  0x36
 #define CHANNEL_0 0x40
-#define FREQ_40HZ 36157
+#define FREQ_40HZ 29830
 #define BYTEMASK  0xFF
 #define PIT_IRQ 0x0
 

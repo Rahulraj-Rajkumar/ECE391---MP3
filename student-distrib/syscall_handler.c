@@ -355,6 +355,8 @@ int32_t execute(const uint8_t* command) {
 */
 int32_t read(int32_t fd, void* buf, int32_t nbytes) {
     int esp, retval;
+
+    // get current task pcb
     asm("movl %%esp, %0" : "=r"(esp) :);
     pcb_t* pcb = (pcb_t *)(esp & PCB_BITMASK);
 
@@ -367,7 +369,7 @@ int32_t read(int32_t fd, void* buf, int32_t nbytes) {
     //read file from array and file directory, return nbytes read
     retval = pcb->file_array[fd].fop_jump_table[READ_INDEX](pcb->file_array[fd].inode, buf, nbytes, pcb->file_array[fd].file_position);
 
-
+    /* update pcb fields */ 
     pcb->file_array[fd].file_position += (pcb->file_array[fd].file_type == 1) ? (retval > 0) : retval;
 
     if(pcb->file_array[fd].flags == 0 && retval == 1) return FAILURE;
@@ -392,6 +394,7 @@ int32_t write(int32_t fd, const void* buf, int32_t nbytes) {
     // check bounds
     if(fd < 0 || fd >= MAX_OPEN_FILES || !buf) return FAILURE;
 
+    /* use appropriate write function based on pcb file_array field */
     retval = pcb->file_array[fd].fop_jump_table[WRITE_INDEX](pcb->file_array[fd].inode, buf, nbytes);
 
     return retval;
@@ -410,6 +413,7 @@ int32_t open(const uint8_t* filename) {
     dentry_t dentry;
     int i, j, esp;
     int test;
+    // get the pcb bruh 
     asm("movl %%esp, %0" : "=r"(esp) :);
     pcb_t* pcb = (pcb_t *)(esp & PCB_BITMASK);
 
@@ -423,9 +427,10 @@ int32_t open(const uint8_t* filename) {
         return FAILURE;
     }
 
-    for(i = 0; i < 8 && pcb->file_array[i].flags; i++);
+    // set i to be index of next open file position to see if open is allowed 
+    for(i = 0; i < MAX_OPEN_FILES && pcb->file_array[i].flags; i++);
 
-    if(i == 8) return FAILURE;
+    if(i == MAX_OPEN_FILES) return FAILURE;
 
     //finds dentry based on name, allocated unused fd and set up data to handle file type
     for(j = 0; j < NUM_FOPS; j++) pcb->file_array[i].fop_jump_table[j] = file_table[dentry.file_type][j];
@@ -497,7 +502,7 @@ int32_t getargs(uint8_t* buf, int32_t nbytes) {
 	}
 
 	/* update pcb->args with buf data */
-    for(i = 0; i < 1024; i++)
+    for(i = 0; i < ARGS_SIZE; i++)
     {
         buf[i] = '\0';
     }
@@ -593,15 +598,27 @@ void return_to_user(int process_id) {
         );
 }
 
+/*
+* pit_int
+*   DESCRIPTION: interrupt handler for pit device
+*   INPUTS: none
+*   OUTPUTS: none
+*   RETURN VALUE: none
+*   SIDE EFFECTS: scheduling
+*/
+
 void pit_int(){
     cli();
 
+    // Send eoi at the beginning to make things more responsive
     send_eoi(PIT_IRQ);
 
+    // if no task running in terminal, nothing to handle.  Only happend before execute shells is run
     if(terminal_array[curr_terminal] == -1) return;
 
     uint8_t next_pid;
 
+    // Find the next "leaf" process (process with no child)
     for(next_pid = (terminal_array[curr_terminal] + 1) % MAX_OPEN_PROCESSES; next_pid != terminal_array[curr_terminal]; next_pid = (next_pid + 1) % 6){
         if(process_array[next_pid] && ((pcb_t *)(K_MEM_END - (next_pid + 1) * K_STACK_SIZE))->leaf) break;
     }
@@ -611,17 +628,21 @@ void pit_int(){
     pcb_t * curr_pcb = (pcb_t *)(K_MEM_END - (terminal_array[curr_terminal] + 1) * K_STACK_SIZE);
     pcb_t * next_pcb = (pcb_t *)(K_MEM_END - (next_pid + 1) * K_STACK_SIZE);
 
+    // Save the esp and ebp to the pcb of the currently running process
     uint32_t ebp, esp;
     asm("movl %%esp, %0" : "=r"(esp) :);
     asm("movl %%ebp, %0" : "=r"(ebp) :);
     curr_pcb->saved_esp = esp;
     curr_pcb->saved_ebp = ebp;
 
+    // Change virtual memory at user page to be scheduled processes page
     change_process(next_pid);
     tss.esp0 = K_MEM_END - K_STACK_SIZE * next_pid - WORD_SIZE;
     
     curr_terminal = next_pcb->terminal;
 
+    // Enter the stack frame of the scheduled process and return.  Since we saved it while in this function,
+    // on return it will go to pit_int_end
     asm volatile("movl %0, %%esp"::"g"(next_pcb->saved_esp)); // Asm stuff put the "ksp" into the %ESP
 	asm volatile("movl %0, %%ebp"::"g"(next_pcb->saved_ebp)); // Asm stuff put the "kbp" into the %EBP
     asm volatile("leave");
@@ -630,10 +651,19 @@ void pit_int(){
     sti();
 }
 
+/*
+* initialize_pit
+*   DESCRIPTION: Sets up PIT device so it is ready to generate and send interrupts
+*   INPUTS:         none
+*   OUTPUTS:        none
+*   RETURN VALUE:   none
+*   SIDE EFFECTS:   Sends data to PIT to initialize it
+*
+*/
 void initialize_pit() {
     disable_irq(PIT_IRQ);
 
-    /* we gonna turn on periodic interrupts on the RTC */
+    /* we gonna turn on periodic interrupts on the PIT */
     outb(PIT_MODE, MCREG);                   // selects channel 0, sets access mode 10 lobyte/hibyte, and enables mode 2                                    
     outb(FREQ_40HZ & BYTEMASK, CHANNEL_0);             // Sets the frequency to 40 HZ (108/55 * 1000000 / 40 = 29830)
     outb((FREQ_40HZ >> 8) & BYTEMASK, CHANNEL_0);   
