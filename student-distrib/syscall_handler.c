@@ -521,20 +521,9 @@ int32_t vidmap(uint8_t** screen_start) {
     if((uint32_t) screen_start >= USER_VID_MEM) return -1;
 
     /* set screen start to specific location in memory */
-    if(get_curr_pcb_term() == 0)
-    {
-        *screen_start = (uint8_t *)(VID1);
-    }
-    else if(get_curr_pcb_term() == 1)
-    {
-        *screen_start = (uint8_t *)(VID2);
-    }
-    else if(get_curr_pcb_term() == 2)
-    {
-        *screen_start = (uint8_t *)(VID3);
-    }
-
+    *screen_start = (uint8_t *)(USER_VID_MEM);
     return 0;
+
 }
 
 /* TODO
