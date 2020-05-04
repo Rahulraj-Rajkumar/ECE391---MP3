@@ -3,15 +3,19 @@
 
 .text
 
-.global pit_int_w, rtc_int_w, kbrd_int_w, sys_int_w
+.global pit_int_w, pit_int_ret, rtc_int_w, kbrd_int_w, sys_int_w
 .extern halt, execute, read, write, open, close, getargs, vidmap, set_handler, sigreturn
+
+# interrupt wrapper that calls interrupt handlers through assembly code to allow for better device communication
 
 pit_int_w:
     pushal
     pushfl
     call pit_int
+pit_int_ret:
     popfl
     popal
+    sti
     iret
 
 rtc_int_w:
