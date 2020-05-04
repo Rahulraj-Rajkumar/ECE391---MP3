@@ -32,6 +32,7 @@ void initialize_rtc() {
     outb(regB | REGISTER_B_CONSTANT, RTCDATA);   // resets register to modified version of regB
 
 
+    change_rate(INITIAL_FREQ);
     enable_irq(RTC_IRQ);
 
 }
@@ -49,6 +50,7 @@ void initialize_rtc() {
 */
 void rtc_int()
 {
+    cli();
     // UNCOMMENT "printf("test")" TO SEE RTC_WRITE TEST WORK
     readFlag = 1;
     // printf("test ");
@@ -64,6 +66,10 @@ void rtc_int()
 
     // readFlag = 0;
     send_eoi(RTC_IRQ);
+
+    refresh_vidmem();
+
+    sti();
 }
 
 /*
@@ -118,7 +124,7 @@ void change_rate(uint32_t rate) {
 */
 int32_t rtc_open(const uint8_t* fileDesc) {
     // done
-    change_rate(DEFAULT_FREQ);
+    // change_rate(INITIAL_FREQ);
     return 0;
 }
 
@@ -185,4 +191,31 @@ int32_t rtc_write(int32_t * fd, const uint8_t* buf, int32_t fileDesc) {
     change_rate(rate);
 
     return 0;
+}
+
+/*
+* refresh_vidmem()
+*   DESCRIPTION: Refreshes video memory (repaints the entire screen), used especially for terminal switches
+*   INPUTS: none
+*   OUTPUTS: none
+*   RETURN VALUE: none
+*   SIDE EFFECTS: copied video buffer to displayed video memory (refreshes screen)
+*
+*/
+
+void refresh_vidmem(){
+    uint32_t ct = get_curr_term();
+    // copies video buffer to video memory depending on active terminal 
+    if(ct == 0)
+    {
+        memcpy((uint8_t *)VIDEO, (uint8_t *)VID1, FOUR_KB);
+    }
+    else if(ct == 1)
+    {
+        memcpy((uint8_t *)VIDEO, (uint8_t *)VID2, FOUR_KB);
+    }
+    else if(ct == 2)
+    {
+        memcpy((uint8_t *)VIDEO, (uint8_t *)VID3, FOUR_KB);
+    }
 }
