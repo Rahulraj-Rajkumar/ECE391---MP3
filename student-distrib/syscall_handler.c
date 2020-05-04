@@ -484,31 +484,32 @@ int32_t close(int32_t fd) {
 *
 */
 int32_t getargs(uint8_t* buf, int32_t nbytes) {
-    int i;
+    int i;  
 
-    /* check if parameters are valid */
+    // check if buf is NULL or number of bytes is 0
     if( buf == NULL || nbytes == 0 )
 	{
-		return -1;
+		return FAILURE;
 	}
 	
-    /* get current pcb struct */
+    // get current pcb
     pcb_t * curr_pcb = (pcb_t *)(K_MEM_END - (terminal_array[curr_terminal] + 1) * K_STACK_SIZE);
 	
-    /* check if arguments too long */
+    // if args is greater than nbytes fail
 	if( strlen((const int8_t*)curr_pcb->args) > nbytes )
 	{   
-		return -1;
+		return FAILURE;
 	}
 
-	/* update pcb->args with buf data */
+	// clear buffer so the previous argument is fully overwritten
     for(i = 0; i < ARGS_SIZE; i++)
     {
         buf[i] = '\0';
     }
 
+    // copy the pcb args into the buffer
 	strcpy((int8_t*)buf, (const int8_t*)curr_pcb->args);
-	return 0;
+	return SUCCESS;
 }
 
 /* TODO
