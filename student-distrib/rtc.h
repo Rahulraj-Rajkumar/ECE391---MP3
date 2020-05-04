@@ -25,11 +25,14 @@
 #define FREQ_UPPER_BOUND            1024
 #define POWER_OF_TWO                2
 
+#define INITIAL_FREQ                32
+
 void initialize_rtc();
 
 void rtc_int();
 
 void change_rate(uint32_t rate);
+void refresh_vidmem();
 
 int32_t rtc_open(const uint8_t* fileDesc);
 int32_t rtc_close(int32_t fileDesc);
