@@ -37,7 +37,7 @@
 #define STD_FILES       2
 
 #define SHELL_LENGTH    6
-#define SHELL_BYTES     4
+#define BUFSIZE     4
 
 #define PUSHED_REGS_SIZE 68
 
