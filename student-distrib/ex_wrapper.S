@@ -5,6 +5,7 @@
 
 .global divide_error_ex_w, debug_ex_w, nmi_int_ex_w, breakpoint_ex_w, overflow_ex_w, bound_range_exceeded_ex_w, opcode_invalid_ex_w, no_device_ex_w, double_fault_ex_w, coprocessor_segment_overrun_ex_w, tss_invalid_ex_w, no_segment_ex_w,  stack_fault_ex_w, gp_fault_ex_w, page_fault_ex_w, fpu_ex_w, alignment_check_ex_w, machine_check_ex_w, simd_ex_w, rtc_int_w, kbrd_int_w
 
+# exception handlers must be called through an assembly wrapper to better execute with low level devices and code 
 
 divide_error_ex_w:
     pushal
