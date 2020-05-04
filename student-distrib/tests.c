@@ -273,7 +273,7 @@ int read_dentry_test(const int8_t* fname) {
  * Side Effects: Tests file_read and read_dentry_by_name
  * Coverage: FILE SYSTEM
  * Files: file_system.c
- */
+ *
 int print_file_test(const int8_t* fname){
 	TEST_HEADER;
 
@@ -288,6 +288,7 @@ int print_file_test(const int8_t* fname){
 
 	return PASS;
 }
+*/
 
 /* test_dir_read
  * 
@@ -296,7 +297,7 @@ int print_file_test(const int8_t* fname){
  * Side Effects: Tests dir_read
  * Coverage: FILE SYSTEM
  * Files: file_system.c
- */
+ *
 int test_dir_read(){
 	TEST_HEADER;
 	uint32_t  offset = 0;
@@ -315,6 +316,7 @@ int test_dir_read(){
 	}
 	return PASS;
 }
+*/
 
 /* test_open_file
  * 
