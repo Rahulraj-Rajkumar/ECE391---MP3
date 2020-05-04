@@ -139,7 +139,7 @@ int32_t execute_shells() {
     //initialize variables
     // uint8_t command[SHELL_LENGTH] = "shell ";
     uint8_t fname[SHELL_LENGTH] = "shell\0";
-    uint8_t buf[SHELL_BYTES];
+    uint8_t buf[BUFSIZE];
     dentry_t dentry;
     int i, j, k;
     uint32_t offset = 0;
@@ -150,7 +150,7 @@ int32_t execute_shells() {
     // for(i = 0; i < MAX_NAME_LENGTH && command[i] != ' '; i++) fname[i] = command[i];
      // if file is valid, continue
     if(read_dentry_by_name((int8_t*)fname, &dentry)) return FAILURE;
-    if(!file_read(dentry.inode_num, buf, SHELL_BYTES, offset)) return FAILURE;
+    if(!file_read(dentry.inode_num, buf, BUFSIZE, offset)) return FAILURE;
 
     /* execute shells by iterating through terminals and setting fields accordingly*/
     for (i = SECOND_TERMINAL; i >= 0; i--) {
@@ -253,12 +253,13 @@ int32_t execute_shells() {
 int32_t execute(const uint8_t* command) {
     //initialize variables
     uint8_t fname[NAME_SIZE];
-    uint8_t buf[4];
+    uint8_t buf[BUFSIZE];
     dentry_t dentry;
     int i, j, pid;
     uint32_t offset = 0;
     uint8_t args[ARGS_SIZE];
 
+    /* pad the file name with \0 so input buffer doesn't get clobbered (helped fix the grep not being recognized) */
     for(i = 0; i < NAME_SIZE; i++)
     {
         fname[i] = '\0';
@@ -287,15 +288,16 @@ int32_t execute(const uint8_t* command) {
 
     // if file is valid, continue
     if(read_dentry_by_name((int8_t*)fname, &dentry)) return FAILURE;
-    if(!file_read(dentry.inode_num, buf, 4, offset)) return FAILURE;
-    if(strncmp((const int8_t*)buf, "ELF", 4)) return FAILURE;
+    if(!file_read(dentry.inode_num, buf, BUFSIZE, offset)) return FAILURE;
+    if(strncmp((const int8_t*)buf, "ELF", BUFSIZE)) return FAILURE;
 
+    // changed user memory page to point to correct address in physical mem to load executed task into 
     change_process(pid);
 
     if(load_program(dentry.inode_num, (uint8_t *)USR_START_ADDR)) return FAILURE;
 
+    // set global variables for current state of terminals and tasks
     process_array[pid] = 1;
-
     terminal_array[curr_terminal] = pid;
 
     /* for every open process, set PCB fields */
@@ -308,13 +310,13 @@ int32_t execute(const uint8_t* command) {
 
     for(i = 0; args[i] != '\0'; i++) pcb->args[i] = args[i];
 
-
+    /* set file array field of pcb according to type of file */
     for(i = 0; i < MAX_OPEN_FILES; i++){
-        for(j = 0; j < NUM_FOPS; j++) pcb->file_array[i].fop_jump_table[j] = (i < 2) ? std_table[i][j] : nofunc_table[j];
+        for(j = 0; j < NUM_FOPS; j++) pcb->file_array[i].fop_jump_table[j] = (i < STD_FILES) ? std_table[i][j] : nofunc_table[j];
         pcb->file_array[i].inode = 0;
         pcb->file_array[i].file_type = -1;
         pcb->file_array[i].file_position = 0;
-        pcb->file_array[i].flags = (i < 2) ? 1 : 0;
+        pcb->file_array[i].flags = (i < STD_FILES) ? 1 : 0;
     }
     
     pcb->pid = pid;
