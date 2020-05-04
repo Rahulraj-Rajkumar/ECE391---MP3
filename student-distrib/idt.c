@@ -11,7 +11,7 @@ void setup_idt()
     int i;
     for (i = 0; i < NUM_VEC; i++)
     {
-        if(i < CP1_IDTSIZE || i == INT_KBRD || i == INT_RTC || i == INT_SYSCALL)
+        if(i < CP1_IDTSIZE || i == INT_PIT || i == INT_KBRD || i == INT_RTC || i == INT_SYSCALL)
         {
             idt[i].seg_selector = KERNEL_CS;
 	        idt[i].reserved4 	= 0x00;
