@@ -7,18 +7,37 @@
 
 #include "types.h"
 
+#define VIDEO       0xB8000
+#define VID1        0xB9000
+#define VID2        0xBA000
+#define VID3        0xBB000
+#define NUM_COLS    80
+#define NUM_ROWS    25
+#define ATTRIB      0x7
+#define FOUR_KB     0x1000
+#define NUMBER_OF_TERMINALS     3
+#define SECOND_TERMINAL         2
+#define CURSOR_PORT         0x3D4
+#define CURSOR_BITMASK      0xFF
+#define BYTE_SHIFT          8
+#define CURSOR_REG1         0x0F
+#define CURSOR_REG2         0x0E
+
 int32_t printf(int8_t *format, ...);
-void putc(uint8_t c);
-int32_t puts(int8_t *s);
+void putc(uint8_t c, uint32_t pcb_term);
+int32_t puts(int8_t *s, uint32_t pcb_term);
 int8_t *itoa(uint32_t value, int8_t* buf, int32_t radix);
 int8_t *strrev(int8_t* s);
 uint32_t strlen(const int8_t* s);
 void clear(void);
 void reset(void);
 void update_cursor();
-void vert_scroll();
-void backspace_helper();
-void putcforcenoscroll(uint8_t c);
+void vert_scroll(uint32_t pcb_term);
+void backspace_helper(uint32_t pcb_term);
+void putcforcenoscroll(uint8_t c, uint32_t pcb_term);
+void update_vidmem(uint32_t next_term);
+void update_curr_term(uint32_t new_term);
+uint32_t get_curr_term();
 
 
 void* memset(void* s, int32_t c, uint32_t n);
