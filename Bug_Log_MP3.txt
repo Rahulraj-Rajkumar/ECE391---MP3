@@ -1,105 +1,125 @@
 ﻿Kernel crashed on keyboard input
 When: 3/21/2020
 Fix: Interrupt gates were set incorrect
-Who: Rahul Rajkumar
+
+
 
 
 No exception when dereferencing NULL ptr
 When: 3/21/2020
 Fix: Only set video memory page to be present
-Who: Matthew Nolan
 
 
 Error in compiling the kernel once RTC was implemented
 When: 3/19/2020
 Fix: Found missing semicolon within rtc.c code.
-Who: Rahul Rajkumar
+
+
 
 
 RTC not initializing
 When: 3/20/2020
 Fix: Forgot to include rtc.h in kernel.c. Fixed it right up.
-Who: Vinayak Dhanawade
+
+
 
 
 Compilation warning due to syntax in paging functions
 When: 3/20/2020
-Who: Matthew Nolan
+
+
 
 
 Implicit declaration of initialize_rtc function in kernel.c
 When: 3/20/2020
 Fix: misspelled initialize in rtc.h
-Who: Vinayak Dhanawade :D
 
 
 Keyboard outputs would not write to top row of console
 When 3/22/2020
 Fix: Edited putc function in lib.c to properly account for rows
-Who: Rahul Rajkumar
 
 
 Syscalls crash the kernel
 When: 3/22/2020
 Fix: Implemented basic handler with asm wrapper for syscalls
-Who: Rahul Rajkumar
 
 
 Compilation warnings for unused variables in user test functions
 When: 3/20/2020
 Fix: set “unused” variables (used for dereferencing) to 0 after they are used
-Who: Rahul Rajkumar
 
 
 Keyboard printing odd characters that aren't actually being typed
 When: 3/25/2020
 Fix: Only allow scancodes within the accepted range
-Who: Rahul Rajkumar
+
+
 
 
 Backspace doesn’t work properly when deleting over a line break
 When: 3/26/2020
 Fix: added new putc function to inhibit scrolling when backspacing over a line break
-Who: Rahul Rajkumar
 
 
 Ctrl+L doesn’t move cursor back to start
 When: 3/27/2020
 Fix: created new reset function to move cursor to start after clearing screen
-Who: Rahul Rajkumar
 
 
 Read Write functions don’t always end with \n character 
 When: 3/28/2020
 Fix: manually edited buffer before copying it (made a new copy of the keyboard buffer)
-Who: Rahul Rajkumar
 
 
 Terminal_read skips a character
 When: 3/29/2020
 Fix: when copying buf, do not copy over endl char that is put on screen
-Who: Matthew Nolan
 
 
 Keyboard Buffer only allowed 126 characters to be added
 When: 4/4/2020
 Fix: Changed a -2 to a -1 (Thought that I needed extra space for \n char)
-Who Rahul Rajkumar
 
 
 Page Fault Exception When Running Pingpong and Fish
 When : 4/15/2020
 Fix: Reverted to old commit with working pingpong and added new vidmap changes to it
-Who: Vinayak Dhanawade
 
 
 Grep and Cat just not working
 When: 4/16/2020
 Fix: a couple of syntax errors in getargs
-Who: Rahul Rajkumar
 
 
 Multiple Shells causes a number of issues, including page fault exception when exiting some
 When: 4/14/2020
 Fix: some semantics error in coding out logic for multiple shells
-Who: Matthew Nolan
+
+
+After implementing multiple terminals, OS just had a black screen and wouldn’t start/display shells
+Fix : Update video memory to be current terminal’s video buffer on every RTC interrupt
+
+
+When typing in initial terminal, keyboard inputs were displaying on active terminal from scheduler rather than displayed terminal
+Fix : Changed keyboard driver so it only uses putc on shown terminal 
+
+
+General Protection Fault when trying to execute literally any program (ls will print and then crash HARD) 
+Fix : We were scheduling tasks that had children, so we stopped that and only cycled through “leaf” tasks
+
+
+OS Crashes upon attempting to exit base shells
+Fix : restart base shell instead of attempting to return to parent process (because there is no parent process)
+
+
+Program terminated abnormally for like all programs
+Fix : push retval after changing esp but before changing ebp in halt function
+
+
+GREP just would not work, it wouldn’t find the command “grep”
+Fix : Overwrote buffer for file read because previous buffer values clobbered new opens like with grep
+
+
+LS Stopped worked after grep fixed
+Fix : implemented boundary check on buf overwrite in file_read and dir_read
