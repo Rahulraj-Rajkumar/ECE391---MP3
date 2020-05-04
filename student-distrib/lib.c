@@ -2,15 +2,17 @@
  * vim:ts=4 noexpandtab */
 
 #include "lib.h"
+#include "keyboard.h"
 
-#define VIDEO       0xB8000
-#define NUM_COLS    80
-#define NUM_ROWS    25
-#define ATTRIB      0x7
 
-static int screen_x;
-static int screen_y;
+
+static int screen_x[NUMBER_OF_TERMINALS];
+static int screen_y[NUMBER_OF_TERMINALS];
 static char* video_mem = (char *)VIDEO;
+static int curr_terminal = 0;
+
+static char* vidmem_pages[MAX_TERMINALS] = {(char *)VID1, (char *)VID2, (char *)VID3};
+
 
 /* void clear(void);
  * Inputs: void
@@ -18,9 +20,16 @@ static char* video_mem = (char *)VIDEO;
  * Function: Clears video memory */
 void clear(void) {
     int32_t i;
+
+    /* Iterates through all of video memory and replaces pointer values in memory and pages*/
     for (i = 0; i < NUM_ROWS * NUM_COLS; i++) {
         *(uint8_t *)(video_mem + (i << 1)) = ' ';
         *(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB;
+    }
+    
+    for (i = 0; i < NUM_ROWS * NUM_COLS; i++) {
+        *(uint8_t *)(vidmem_pages[curr_terminal] + (i << 1)) = ' ';
+        *(uint8_t *)(vidmem_pages[curr_terminal] + (i << 1) + 1) = ATTRIB;
     }
 }
 
@@ -32,25 +41,61 @@ void clear(void) {
  * and resets cursor to top of screen */
 void reset(void) {
     int32_t i;
+
+    /* Iterates through all of video memory and video pages and replaces pointer values*/
     for (i = 0; i < NUM_ROWS * NUM_COLS; i++) {
         *(uint8_t *)(video_mem + (i << 1)) = ' ';
         *(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB;
     }
-    screen_x = 0;
-    screen_y = 0;
+    for (i = 0; i < NUM_ROWS * NUM_COLS; i++) {
+        *(uint8_t *)(vidmem_pages[curr_terminal] + (i << 1)) = ' ';
+        *(uint8_t *)(vidmem_pages[curr_terminal] + (i << 1) + 1) = ATTRIB;
+    }
+
+    /* resets cursor to top of screen */
+    screen_x[curr_terminal] = 0;
+    screen_y[curr_terminal] = 0;
     update_cursor();
 }
-
 
 /* void update_cursor();
  * Inputs: none
  * Return Value: none
  * Function: updates cursor to proper location */
 void update_cursor(){
-	outb(0x0F, 0x3D4);
-	outb((unsigned char)(((screen_y * NUM_COLS) + screen_x) & 0xFF), 0x3D4 + 1);
-    outb(0x0E, 0x3D4);
-	outb((unsigned char)((((screen_y * NUM_COLS) + screen_x)>>8) & 0xFF), 0x3D4 + 1);
+
+    // cursor communication as found in OSDev documentation
+	outb(CURSOR_REG1, CURSOR_PORT);
+	outb((unsigned char)(((screen_y[curr_terminal] * NUM_COLS) + screen_x[curr_terminal]) & CURSOR_BITMASK), CURSOR_PORT + 1);
+    outb(CURSOR_REG2, CURSOR_PORT);
+	outb((unsigned char)((((screen_y[curr_terminal] * NUM_COLS) + screen_x[curr_terminal])>>BYTE_SHIFT) & CURSOR_BITMASK), CURSOR_PORT + 1);
+}
+
+/* void update_curr_term();
+ * Inputs: new_term: new terminal to change to
+ * Return Value: none
+ * Function: updates current terminal variable */
+void update_curr_term(uint32_t new_term) {
+    if(new_term >= 0 && new_term <= SECOND_TERMINAL){
+        curr_terminal  = new_term;
+    }        
+}
+
+/* void get_curr_term();
+ * Inputs: none
+ * Return Value: curr_terminal
+ * Function: returns current terminal variable */
+uint32_t get_curr_term() {
+    return curr_terminal;  
+}
+
+/* void update_vidmem();
+ * Inputs: next_term: new terminal to change to
+ * Return Value: none
+ * Function: updates video memory to next terminal */
+void update_vidmem(uint32_t next_term) {
+    memcpy(video_mem, vidmem_pages[next_term], FOUR_KB);
+    update_cursor();
 }
 
 
@@ -92,7 +137,7 @@ format_char_switch:
                     switch (*buf) {
                         /* Print a literal '%' character */
                         case '%':
-                            putc('%');
+                            putc('%', curr_terminal);
                             break;
 
                         /* Use alternate formatting */
@@ -110,7 +155,7 @@ format_char_switch:
                                 int8_t conv_buf[64];
                                 if (alternate == 0) {
                                     itoa(*((uint32_t *)esp), conv_buf, 16);
-                                    puts(conv_buf);
+                                    puts(conv_buf, curr_terminal);
                                 } else {
                                     int32_t starting_index;
                                     int32_t i;
@@ -120,7 +165,7 @@ format_char_switch:
                                         conv_buf[i] = '0';
                                         i++;
                                     }
-                                    puts(&conv_buf[starting_index]);
+                                    puts(&conv_buf[starting_index], curr_terminal);
                                 }
                                 esp++;
                             }
@@ -131,7 +176,7 @@ format_char_switch:
                             {
                                 int8_t conv_buf[36];
                                 itoa(*((uint32_t *)esp), conv_buf, 10);
-                                puts(conv_buf);
+                                puts(conv_buf, curr_terminal);
                                 esp++;
                             }
                             break;
@@ -147,20 +192,20 @@ format_char_switch:
                                 } else {
                                     itoa(value, conv_buf, 10);
                                 }
-                                puts(conv_buf);
+                                puts(conv_buf, curr_terminal);
                                 esp++;
                             }
                             break;
 
                         /* Print a single character */
                         case 'c':
-                            putc((uint8_t) *((int32_t *)esp));
+                            putc((uint8_t) *((int32_t *)esp), curr_terminal);
                             esp++;
                             break;
 
                         /* Print a NULL-terminated string */
                         case 's':
-                            puts(*((int8_t **)esp));
+                            puts(*((int8_t **)esp), curr_terminal);
                             esp++;
                             break;
 
@@ -172,7 +217,7 @@ format_char_switch:
                 break;
 
             default:
-                putc(*buf);
+                putc(*buf, curr_terminal);
                 break;
         }
         buf++;
@@ -184,10 +229,10 @@ format_char_switch:
  *   Inputs: int_8* s = pointer to a string of characters
  *   Return Value: Number of bytes written
  *    Function: Output a string to the console */
-int32_t puts(int8_t* s) {
+int32_t puts(int8_t* s, uint32_t pcb_term) {
     register int32_t index = 0;
     while (s[index] != '\0') {
-        putc(s[index]);
+        putc(s[index], pcb_term);
         index++;
     }
     return index;
@@ -198,15 +243,16 @@ int32_t puts(int8_t* s) {
  *   Inputs: none
  *   Return Value: none
  *    Function: scrolls screen when last line is crossed */
-void vert_scroll(){
+void vert_scroll(uint32_t pcb_term){
     int32_t i;
+    // iterates through all of video page memory and shifts screen data 
     for(i=0; i<(NUM_ROWS - 1)*NUM_COLS; i++) {
-        *(uint8_t *)(video_mem + (i << 1)) = *(uint8_t *)(video_mem + ((i + NUM_COLS) << 1));
-        *(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB;
+        *(uint8_t *)(vidmem_pages[pcb_term] + (i << 1)) = *(uint8_t *)(vidmem_pages[pcb_term] + ((i + NUM_COLS) << 1));
+        *(uint8_t *)(vidmem_pages[pcb_term] + (i << 1) + 1) = ATTRIB;
     }
     for(i=(NUM_ROWS - 1)*NUM_COLS; i<NUM_ROWS*NUM_COLS; i++){
-        *(uint8_t *)(video_mem + (i << 1)) = ' ';
-        *(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB;
+        *(uint8_t *)(vidmem_pages[pcb_term] + (i << 1)) = ' ';
+        *(uint8_t *)(vidmem_pages[pcb_term] + (i << 1) + 1) = ATTRIB;
     }
 }
 
@@ -215,20 +261,23 @@ void vert_scroll(){
  *   Inputs: none
  *   Return Value: none
  *    Function: handles backspace input from keyboard */
-void backspace_helper(){
+void backspace_helper(uint32_t pcb_term){
     int tempy = 0;
-    if(screen_x == 0){
-        screen_x = NUM_COLS - 1;
-        screen_y--;
-        tempy = screen_y;
-        putcforcenoscroll(' ');
-        screen_x = NUM_COLS - 1;
-        screen_y = tempy;
+
+    // modifies overall screen x screen y values and makes sure screen doesn't scroll down 
+    // then updates the cursor to the right location
+    if(screen_x[pcb_term] == 0){
+        screen_x[pcb_term] = NUM_COLS - 1;
+        screen_y[pcb_term]--;
+        tempy = screen_y[pcb_term];
+        putcforcenoscroll(' ', pcb_term);
+        screen_x[pcb_term] = NUM_COLS - 1;
+        screen_y[pcb_term] = tempy;
     }
     else{
-        screen_x--;
-        putc(' ');
-        screen_x--;
+        screen_x[pcb_term]--;
+        putc(' ', pcb_term);
+        screen_x[pcb_term]--;
     }
     update_cursor();
 }
@@ -237,28 +286,28 @@ void backspace_helper(){
  * Inputs: uint_8* c = character to print
  * Return Value: void
  *  Function: Output a character to the console */
-void putc(uint8_t c) {
+void putc(uint8_t c, uint32_t pcb_term) {
     if(c == '\n' || c == '\r') {
-        screen_y++;
-        screen_x = 0;
-        if(screen_y > NUM_ROWS - 1)
+        screen_y[pcb_term]++;
+        screen_x[pcb_term] = 0;
+        if(screen_y[pcb_term] > NUM_ROWS - 1)
         {
-            vert_scroll();
-            screen_y = NUM_ROWS - 1;
+            vert_scroll(pcb_term);
+            screen_y[pcb_term] = NUM_ROWS - 1;
         }
     } else if(c == '\000') {
     } else {
-        *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = c;
-        *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = ATTRIB;
-        screen_x++;
-        if(screen_y + (screen_x / NUM_COLS) == NUM_ROWS)
+        *(uint8_t *)(vidmem_pages[pcb_term] + ((NUM_COLS * screen_y[pcb_term] + screen_x[pcb_term]) << 1)) = c;
+        *(uint8_t *)(vidmem_pages[pcb_term] + ((NUM_COLS * screen_y[pcb_term] + screen_x[pcb_term]) << 1) + 1) = ATTRIB;
+        screen_x[pcb_term]++;
+        if(screen_y[pcb_term] + (screen_x[pcb_term] / NUM_COLS) == NUM_ROWS)
         {
-            vert_scroll();
-            screen_y = NUM_ROWS - 1;
+            vert_scroll(pcb_term);
+            screen_y[pcb_term] = NUM_ROWS - 1;
         }
         else
-        screen_y =  (screen_y + (screen_x / NUM_COLS)) % NUM_ROWS;
-        screen_x = screen_x % NUM_COLS;
+        screen_y[pcb_term] =  (screen_y[pcb_term] + (screen_x[pcb_term] / NUM_COLS)) % NUM_ROWS;
+        screen_x[pcb_term] = screen_x[pcb_term] % NUM_COLS;
     }
     update_cursor();
 }
@@ -269,16 +318,18 @@ void putc(uint8_t c) {
  * Return Value: void
  *  Function: Output a character to the console
  * but dont scroll the page (used for backspace) */
-void putcforcenoscroll(uint8_t c) {
+void putcforcenoscroll(uint8_t c, uint32_t pcb_term) {
+
+    // puts in character to right terminal and current cursor location, then adds case to make sure screen doesn't scroll
     if(c == '\n' || c == '\r') {
-        screen_y++;
-        screen_x = 0;
+        screen_y[pcb_term]++;
+        screen_x[pcb_term] = 0;
     } else {
-        *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = c;
-        *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = ATTRIB;
-        screen_x++;
-        screen_x %= NUM_COLS;
-        screen_y = (screen_y + (screen_x / NUM_COLS)) % NUM_ROWS;
+        *(uint8_t *)(vidmem_pages[pcb_term] + ((NUM_COLS * screen_y[pcb_term] + screen_x[pcb_term]) << 1)) = c;
+        *(uint8_t *)(vidmem_pages[pcb_term] + ((NUM_COLS * screen_y[pcb_term] + screen_x[pcb_term]) << 1) + 1) = ATTRIB;
+        screen_x[pcb_term]++;
+        screen_x[pcb_term] %= NUM_COLS;
+        screen_y[pcb_term] = (screen_y[pcb_term] + (screen_x[pcb_term] / NUM_COLS)) % NUM_ROWS;
     }
     update_cursor();
 }
