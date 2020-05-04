@@ -30,20 +30,26 @@ int32_t init_file_system (uint32_t file_system_begin, uint32_t file_system_end){
  */
 int32_t read_dentry_by_name (const int8_t* fname, dentry_t* dentry){
     int i;
-
+ 
     //when null, fail
     if (!dentry) return FAILURE;
-
+ 
     //7, 0 and 5 are limits for certain commands that are not possible given our extension of the code
-    if(strncmp((int8_t*)fname, "helloo", 7) == 0|| strncmp((int8_t*)fname, "", 1) == 0 || strncmp((int8_t*)fname, "shel", 5) == 0)
-    {
-        return FAILURE;
-    }
+    // if(strncmp((int8_t*)fname, "helloo", 7) == 0|| strncmp((int8_t*)fname, "", 1) == 0 || strncmp((int8_t*)fname, "shel", 5) == 0)
+    // {
+    //     return FAILURE;
+    // }
     //when the length of the file name is too long, num of bts to compare is 32
     uint32_t num_bits = (strlen((int8_t*)fname) > NAME_SIZE) ? NAME_SIZE : strlen((int8_t*)fname);
-
+ 
+    if(!num_bits) return FAILURE;
+ 
     //find the dentry based on the name in the dentries array in bootblock
     for (i = 0; i < NUM_DENTRIES; i++){
+        if(num_bits != NAME_SIZE)
+        {
+            num_bits = (strlen(boot_block->dentries[i].file_name) > num_bits) ? strlen(boot_block->dentries[i].file_name) : num_bits;
+        }
         if(!strncmp((int8_t*)fname, boot_block->dentries[i].file_name, num_bits)){
             *dentry = boot_block->dentries[i];
             return SUCCESS;
@@ -81,6 +87,7 @@ int32_t read_dentry_by_index (uint32_t index, dentry_t* dentry){
  * Side Effects: writes to buf
  */
 int32_t read_data (uint32_t inode_index, uint32_t offset, uint8_t* buf, uint32_t length){
+    int i;
     inode_t* inode;
     data_block_t* data_block;
     uint32_t num_bytes;
@@ -94,13 +101,15 @@ int32_t read_data (uint32_t inode_index, uint32_t offset, uint8_t* buf, uint32_t
     else data_block = (data_block_t*)boot_block + (boot_block->num_inodes+1 + inode->data_block[offset/BLOCK_SIZE]);
     
     if(!buf) return FAILURE;
+
+    
     
     //calculate number of bytes read using offset and length
     num_bytes = (offset+length > inode->length) ? (inode->length - offset) : (length);
 
     //write to buffer by calculating data in each block by using the offset because the length can be greater than block size, use mod/divison 
     //to get correct data 
-    int i;
+    
     for(i=offset; i < offset+num_bytes; i++){
         if(i%BLOCK_SIZE == 0) data_block = (data_block_t*)boot_block + (boot_block->num_inodes+1 + inode->data_block[i/BLOCK_SIZE]);
         buf[i-offset] = data_block->data[i%BLOCK_SIZE];
@@ -113,7 +122,7 @@ int32_t read_data (uint32_t inode_index, uint32_t offset, uint8_t* buf, uint32_t
  * Inputs: dentry_t* file
  * Outputs: prints the contents of the file
  * Side Effects: none
- */
+ *
 void print_file(dentry_t* file){
 
     //print file name and file type
@@ -153,6 +162,7 @@ void print_file(dentry_t* file){
         for(j = 0; j < num_bytes; j++) putc(buf[j]);
     printf("\n");
 }
+*/
 
 
 /* file_open
@@ -200,8 +210,14 @@ int32_t file_write (int32_t fd, const void* buf, int32_t nbytes){
  * Side Effects: calls read_data
  */
 int32_t file_read (int32_t fd, uint8_t* buf, int32_t nbytes, uint32_t offset){
+    int i;
     uint32_t read;
     //data is read until end of file or until end of buffer
+    for(i = 0; buf[i] != '\0' && i < NAME_SIZE; i++)
+    {
+        buf[i] = '\0';
+    }
+
     read = read_data(fd,offset,buf,nbytes);
     //if(read > 0) offset += read;
     return read;
@@ -250,7 +266,13 @@ int32_t dir_write (int32_t fd, const void* buf, int32_t nbytes){
  * Side Effects: changes buf
  */
 int32_t dir_read (int32_t fd, uint8_t* buf, int32_t nbytes, uint32_t offset){
+    int i;
     dentry_t dir;
+
+    for(i = 0; buf[i] != '\0' && i < NAME_SIZE; i++)
+    {
+        buf[i] = '\0';
+    }
     //read by index
     if(-1 == read_dentry_by_index(offset, &dir)) return FAILURE;
     //sets the number of bytes to read to be the length of the filename if greater
