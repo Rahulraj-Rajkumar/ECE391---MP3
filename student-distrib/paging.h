@@ -38,14 +38,17 @@
 
 #define DEFAULT_PTE         PTE_RW | PTE_P
 
-#define PROCESS_LOC(m, n)      (m * 3 + n + 2) * PAGE_SIZE * TABLE_SIZE
+#define PROCESS_LOC(n)      (n + 2) * PAGE_SIZE * TABLE_SIZE
+#define TERM_VIDEO_LOC(n)        (n + 1) * PAGE_SIZE + VIDEO_LOC
 
 #define USER_PROCESS_INDEX  32
 #define USER_VID_PT_INDEX   33
 
 void init_paging();
 
-void change_process(int terminal, int pid);
+void change_process(int pid);
+
+void change_vidmap(int terminal);
 
 void flush_tlb();
 
